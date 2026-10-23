@@ -1,6 +1,6 @@
 # Changelog
 
-## 未发布 — browser-style project tabs
+## 0.7.18 — 2026-10-23: browser-style project tabs
 
 - Close a project tab from the × on the tab or from its right-click menu (close this tab / tabs to the left / tabs to the right / other tabs). Closing only hides the tab: the `.pixloom` file, project number, id and saved versions are untouched, and the project does not enter the removed list.
 - Closing the tab being edited saves its dirty pixels first, then opens the tab to the right (else the left, else a clean empty workspace). A batch close can name the tab that must survive.
@@ -8,7 +8,7 @@
 - MCP parity: `pixel_projects` gains `close` / `closed` / `reopen`; `project_library` reports `open_count` and `closed_count` next to the existing counts.
 - Tests: unit cases for close, reopen, persistence across restart and neighbour switching, plus GUI coverage of the × control and the reopen flow.
 - Skip missing or corrupt neighbours until another valid open tab is found, and keep the × usable for unavailable inactive files. Expose keep_project_id in the MCP schema and verify it through real clients.
-- Add contributor acknowledgments and README links, preserve original commit authorship, and include CONTRIBUTORS.md in future source and portable packages.
+- Add contributor acknowledgments and README links, preserve original commit authorship, and include CONTRIBUTORS.md in source and portable packages.
 
 ## 0.7.17 — 2026-10-18: optional art coordination and host-generation handoff
 

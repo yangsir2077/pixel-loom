@@ -1,12 +1,12 @@
 # Pixel Loom · 像素织机
 
-**0.7.17 公开测试版**：增加可选的整体／局部创作协作和客户端生图衔接，精简重复说明与预览传输。原有绘画、图层、动画、抠图、项目版本及引擎导出功能保留。源码采用 MIT 开源许可，历史版本可在发布页中分别下载。
+**0.7.18 公开测试版**：新增项目标签关闭、批量收起和重新打开，关闭当前项目会先保存修改，保留工程文件与历史版本。MCP 同步支持，新增贡献者名单。源码采用 MIT 开源许可，历史版本可在发布页中分别下载。
 
-## [⬇ 下载 Windows 便携版 · 0.7.17](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.17/pixel-loom-0.7.17-windows-x64.zip)
+## [⬇ 下载 Windows 便携版 · 0.7.18](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.18/pixel-loom-0.7.18-windows-x64.zip)
 
 下载后**完整解压**，双击 **打开像素织机.cmd** 即可使用，无需安装 Python。
 
-[查看发布页、版本说明与校验值](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.17) · [使用说明](#1-先打开应用) · [反馈问题](https://github.com/yangsir2077/pixel-loom/issues)
+[查看发布页、版本说明与校验值](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.18) · [使用说明](#1-先打开应用) · [反馈问题](https://github.com/yangsir2077/pixel-loom/issues)
 
 > **想直接使用，请点上面的 Windows 下载链接。** 本页的 `git clone`、**Code → Download ZIP**、`*-source.zip` 和 **Source code** 下载的是源码，不包含可直接运行的 `app` 文件夹或 exe。
 
@@ -24,7 +24,7 @@
 
 ## 1. 先打开应用
 
-1. 下载 **pixel-loom-0.7.17-windows-x64.zip**，或在[发布页](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.17)的 **Assets（资源）** 中选择这个文件。
+1. 下载 **pixel-loom-0.7.18-windows-x64.zip**，或在[发布页](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.18)的 **Assets（资源）** 中选择这个文件。
 2. 完整解压，打开解压得到的 **PixelLoom** 文件夹；不要直接在压缩包里运行。
 3. 双击根目录的 **打开像素织机.cmd**，或进入 **app** 文件夹双击 **PixelLoom.exe**。Windows 便携版不需要另装 Python。
 
