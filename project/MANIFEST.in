@@ -1,4 +1,4 @@
-include README.md README.en.md LICENSE CHANGELOG.md CONTRIBUTING.md SECURITY.md THIRD_PARTY_NOTICES.md
+include README.md README.en.md LICENSE CHANGELOG.md CONTRIBUTING.md CONTRIBUTORS.md SECURITY.md THIRD_PARTY_NOTICES.md
 include setup.ps1 launch.ps1 mcp_server.py AGENTS.md CLAUDE.md requirements.txt
 include .gitignore 打开像素织机.cmd
 include tools/build_release.py tools/package_windows.py tools/package_handoff.py tools/frozen_entry.py tools/windows.spec

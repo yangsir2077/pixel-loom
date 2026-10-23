@@ -79,10 +79,12 @@ class DocumentService:
                 "unsaved_changes": self.dirty, "editor": {"mode": self.mode, **self.view},
                 "workspace": str(self.workspace), "reference_workflow": reference,
                 "quality_review": self.quality.summary(self.doc), "feedback": feedback_summary(self.doc),
-                "project_library": {"count":sum(not entry.get('deleted_at') for entry in self.projects.entries),
-                    "deleted_count":sum(bool(entry.get('deleted_at')) for entry in self.projects.entries),
+                "project_library": {"count":len(self.projects.scoped('open'))+len(self.projects.scoped('closed')),
+                    "open_count":len(self.projects.scoped('open')),
+                    "closed_count":len(self.projects.scoped('closed')),
+                    "deleted_count":len(self.projects.scoped('deleted')),
                     "active":self.projects.by_path(self.path) if self.path else None,
-                    "help":"pixel_projects: list/register, fork/new/switch, versions/version_preview/use_version/restore/compare, remove/deleted/undelete"}}
+                    "help":"pixel_projects: list/register, fork/new/switch, versions/version_preview/use_version/restore/compare, close/reopen, remove/deleted/undelete"}}
 
     def resolve(self, value):
         path = Path(value).expanduser()
@@ -159,19 +161,19 @@ class DocumentService:
 
     def project_listing(self):
         from .storage import paged
-        total=sum(not e.get('deleted_at') for e in self.projects.entries)
+        total=len(self.projects.scoped('open'))
         listing=paged([None]*total)
         return {'projects':self.projects.listing(self.path,page=0,limit=20),
                 'project_list_paging':{k:v for k,v in listing.items() if k!='items'}}
 
     def projects_action(self,payload):
         action=payload.get('action','list')
-        if action in ('list','deleted'):
+        if action in ('list','deleted','closed'):
             from .storage import paged
-            total=sum(bool(e.get('deleted_at'))==(action=='deleted') for e in self.projects.entries)
+            total=len(self.projects.scoped('deleted' if action=='deleted' else 'closed' if action=='closed' else 'open'))
             listing=paged([None]*total,payload.get('page',0),payload.get('limit',20))
             return {'ok':True,**self.state(),**{k:v for k,v in listing.items() if k!='items'},
-                    'projects':self.projects.listing(self.path,action=='deleted',listing['page'],listing['limit'])}
+                    'projects':self.projects.listing(self.path,action=='deleted',listing['page'],listing['limit'],action=='closed')}
         if action=='versions':
             from .storage import paged
             from .model import integer
@@ -257,6 +259,43 @@ class DocumentService:
             return {'ok':True,**self.state(),**self.project_listing(),
                     'changed_project_ids':[entry['id'] for entry in changed],
                     'files_preserved':True,'history_preserved':True}
+        if action in ('close','reopen'):
+            project_ids=payload.get('project_ids') or [payload.get('project_id')]
+            if not isinstance(project_ids,list) or not 1<=len(project_ids)<=256 or any(not isinstance(key,str) for key in project_ids):
+                raise PixelError('Choose 1–256 project ids')
+            requested=set(dict.fromkeys(project_ids))
+            for key in requested:self.projects.get(key)  # Validate every id before changing the shelf.
+            if action=='reopen':
+                changed=self.projects.set_closed([entry['id'] for entry in self.projects.scoped('closed')
+                                                  if entry['id'] in requested],closed=False)
+                return {'ok':True,**self.state(),**self.project_listing(),
+                        'changed_project_ids':[entry['id'] for entry in changed],
+                        'files_preserved':True,'history_preserved':True}
+            open_entries=self.projects.listing(self.path)
+            closing=[entry for entry in open_entries if entry['id'] in requested]
+            if not closing:
+                return {'ok':True,**self.state(),**self.project_listing(),'changed_project_ids':[]}
+            closing_ids={entry['id'] for entry in closing}
+            active=next((entry for entry in open_entries if entry['active']),None)
+            if active is not None and active['id'] in closing_ids:
+                # Closing the tab being edited: keep its pixels, then open a survivor the way
+                # a browser activates the neighbouring tab. The caller may name one explicitly.
+                keep_id=payload.get('keep_project_id')
+                index=open_entries.index(active)
+                survivors=[entry for entry in open_entries if entry['id'] not in closing_ids]
+                right=[entry for entry in open_entries[index+1:] if entry['id'] not in closing_ids]
+                left=[entry for entry in reversed(open_entries[:index]) if entry['id'] not in closing_ids]
+                destination=None
+                for entry in [*[e for e in survivors if e['id']==keep_id],*right,*left]:
+                    if not entry['available']:continue
+                    try:destination=(Document.open(entry['path']),entry['path']);break
+                    except (OSError,ValueError,KeyError):continue
+                self.checkpoint_current()
+                self.replace(*(destination or (Document(),None)))
+            changed=self.projects.set_closed([entry['id'] for entry in closing],closed=True)
+            return {'ok':True,**self.state(),**self.project_listing(),
+                    'changed_project_ids':[entry['id'] for entry in changed],
+                    'files_preserved':True,'history_preserved':True}
         if action=='register':
             target=self.resolve(payload['path'])
             if self.path is not None and path_key(target)==path_key(self.path):
@@ -267,6 +306,7 @@ class DocumentService:
             if self.path is not None and path_key(entry['path'])==path_key(self.path):
                 return {'ok':True,**self.state(),**self.project_listing()}
             doc=Document.open(entry['path'])  # Validate destination before saving or replacing anything.
+            if entry.get('closed_at'):self.projects.set_closed([entry['id']],closed=False)  # Opening reopens the tab.
             self.checkpoint_current()
             self.replace(doc,entry['path'])
         elif action in ('fork','new','restore'):
@@ -460,8 +500,8 @@ class DocumentService:
                 "exports_directory": str(self.workspace / "exports"), "recovery_directory": str(self.runtime / "recovery"),
                 "recent_projects": [{"name": path.name, "path": str(path)} for path in projects[:20]],
                 "project_library":self.projects.listing(self.path,page=0,limit=20),
-                "project_library_paging":{"limit":20,"total":sum(not e.get('deleted_at') for e in self.projects.entries),
-                    "has_more":sum(not e.get('deleted_at') for e in self.projects.entries)>20,"tool":"pixel_projects(action='list', page=...)"},
+                "project_library_paging":{"limit":20,"total":len(self.projects.scoped('open')),
+                    "has_more":len(self.projects.scoped('open'))>20,"tool":"pixel_projects(action='list', page=...)"},
                 "recovery_files": [{"name": path.name, "path": str(path)} for path in recoveries[:20]],
                 "path_rules": "Relative paths resolve inside workspace. Existing exports need overwrite=true. Save the current project before opening another."}
 

@@ -696,20 +696,15 @@ class DesktopUI:
         self.project_menu.add_command(label='项目管理 · 添加 / 删除 / 恢复',command=self.manage_projects_dialog)
         self.project_menu.add_command(label='添加已有项目…',command=self.add_existing_projects)
         self.project_menu.add_command(label='已删除的项目',command=lambda:self.manage_projects_dialog(deleted=True))
+        self.project_menu.add_command(label='已收起的标签页',command=lambda:self.manage_projects_dialog(closed=True))
         self.project_menu.add_separator()
         for entry in entries:
             title=f"{entry['number']} · {entry['name']}"
             self.project_menu.add_command(label=title,command=lambda key=entry['id']:self.project_action('switch',project_id=key),
                                           state='normal' if entry['available'] else 'disabled')
-            button=self.button(self.project_tabs,title[:25],lambda key=entry['id']:self.project_action('switch',project_id=key),
-                               pady=5,font=SMALL,bg=FIELD if entry['active'] else BG,
-                               fg=ACCENT if entry['active'] else MUTED,activebackground=FIELD)
-            button.pack(side='left',padx=(0,5))
-            self.project_tab_buttons[entry['id']]=button
-            self.bind_project_scroll(button)
-            button.bind('<Button-3>',lambda event,key=entry['id']:self.project_context_menu(event,key))
-            if not entry['available']:button.config(state='disabled')
-            Tooltip(button,title+'\n'+entry['path']+'\n右键可删除项目；工程与历史可恢复。')
+            tab=self.project_tab(entry,title)
+            tab.pack(side='left',padx=(0,5))
+            self.project_tab_buttons[entry['id']]=tab
         if entries:
             if not self.project_shelf.winfo_manager():
                 self.project_shelf.pack(fill="x", after=self.workflow_bar)
@@ -719,15 +714,16 @@ class DesktopUI:
         self.layout_project_tabs()
         self.reveal_active_project()
 
-    def manage_projects_dialog(self,deleted=False):
+    def manage_projects_dialog(self,deleted=False,closed=False):
         from .project_ui import ProjectManagerDialog
+        scope='deleted' if deleted else 'closed' if closed else 'open'
         existing=getattr(self,'project_manager',None)
         if existing and existing.dialog.winfo_exists():
-            existing.select_tab(deleted)
+            existing.select_tab(scope)
             existing.refresh()
             existing.dialog.lift()
             return existing
-        self.project_manager=ProjectManagerDialog(self,deleted)
+        self.project_manager=ProjectManagerDialog(self,scope)
         return self.project_manager
 
     def add_existing_projects(self):
@@ -755,11 +751,59 @@ class DesktopUI:
             return None
         return self.project_action('remove',project_ids=project_ids)
 
+    def project_tab(self,entry,title):
+        """One browser-style tab: the title switches projects, the trailing × closes the tab."""
+        background=FIELD if entry['active'] else BG
+        pointer='hand2' if entry['available'] else 'arrow'
+        tab=tk.Frame(self.project_tabs,bg=background,cursor=pointer)
+        name=tk.Label(tab,text=title[:25],bg=background,fg=ACCENT if entry['active'] else MUTED,
+                      font=SMALL,padx=6,pady=5,anchor='w',cursor=pointer)
+        name.pack(side='left')
+        close=tk.Label(tab,text='✕',bg=background,fg=MUTED,font=SMALL,padx=4,pady=5,cursor='hand2')
+        close.pack(side='left')
+        tab.entry,tab.name_label,tab.close_label=entry,name,close
+        if entry['available']:
+            name.bind('<Button-1>',lambda event,key=entry['id']:self.project_action('switch',project_id=key))
+        close.bind('<Button-1>',lambda event,key=entry['id']:self.close_project_tab(event,key))
+        close.bind('<Enter>',lambda event:close.config(fg=FG))
+        close.bind('<Leave>',lambda event:close.config(fg=MUTED))
+        for widget in (tab,name,close):
+            self.bind_project_scroll(widget)
+            widget.bind('<Button-3>',lambda event,key=entry['id']:self.project_context_menu(event,key))
+        Tooltip(name,title+'\n'+entry['path']+'\n×或右键可关闭标签页；工程文件与历史版本不受影响。')
+        return tab
+
+    def close_project_tab(self,event,project_id):
+        return self.close_projects([project_id])
+
+    def close_projects(self,project_ids,keep_id=None):
+        """Close shelf tabs only; files, versions and project ids are untouched."""
+        project_ids=[key for key in dict.fromkeys(project_ids) if key]
+        if not project_ids:return None
+        return self.project_action('close',project_ids=project_ids,**({'keep_project_id':keep_id} if keep_id else {}))
+
     def project_context_menu(self,event,project_id):
+        entries=self.service.projects.listing(self.path)
+        order=[entry['id'] for entry in entries]
+        if project_id not in order:return
+        index=order.index(project_id)
+        left,right=order[:index],order[index+1:]
+        others=[key for key in order if key!=project_id]
         menu=tk.Menu(self.root,tearoff=False,bg=FIELD,fg=FG)
         menu.add_command(label='切换到此项目',command=lambda:self.project_action('switch',project_id=project_id))
+        menu.add_separator()
+        menu.add_command(label='关闭此标签页',command=lambda:self.close_projects([project_id]))
+        menu.add_command(label=f'关闭左侧 {len(left)} 个标签页' if left else '关闭左侧标签页',
+                         command=lambda:self.close_projects(left),state='normal' if left else 'disabled')
+        menu.add_command(label=f'关闭右侧 {len(right)} 个标签页' if right else '关闭右侧标签页',
+                         command=lambda:self.close_projects(right),state='normal' if right else 'disabled')
+        menu.add_command(label=f'关闭其他 {len(others)} 个标签页' if others else '关闭其他标签页',
+                         command=lambda:self.close_projects(others,keep_id=project_id),
+                         state='normal' if others else 'disabled')
+        menu.add_separator()
         menu.add_command(label='添加已有项目…',command=self.add_existing_projects)
-        menu.add_command(label='项目管理…',command=self.manage_projects_dialog)
+        menu.add_command(label='项目管理…',command=lambda:self.manage_projects_dialog())
+        menu.add_command(label='已收起的标签页…',command=lambda:self.manage_projects_dialog(closed=True))
         menu.add_separator()
         menu.add_command(label='删除此项目（可恢复）',command=lambda:self.delete_projects([project_id]))
         menu.tk_popup(event.x_root,event.y_root)
@@ -771,6 +815,8 @@ class DesktopUI:
             result=self.dispatch('POST','/projects',{},dict(action=action,expected_document_id=self.doc.id,
                                   expected_revision=self.doc.revision,source='手动',**fields))[0]
             messages={'remove':'项目已删除 · 文件和历史保留，可从“管理项目 → 已删除”恢复。',
+                      'close':'标签页已收起 · 工程文件、编号和历史版本不变，可从“项目管理 → 已收起”重新打开。',
+                      'reopen':'标签页已重新打开。',
                       'use_version':'已选用此版本 · 当前版与其他迭代保留在“版本记录”。',
                       'undelete':'项目已恢复 · 原编号、工程文件和历史版本保留。',
                       'register':'已有工程已加入项目栏。'}

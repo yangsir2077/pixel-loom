@@ -1,5 +1,7 @@
 # Contributing
 
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for acknowledgments and the complete GitHub contributor graph. Preserve original commit authorship when merging. Contributions to code, tests, design and issue diagnosis may also be acknowledged there with a link to their PR or issue.
+
 Start in the source directory containing `pyproject.toml`: from the root of a Git clone or the complete source ZIP, run `cd project` first. Install Python 3.11+ and a virtual environment, then run `python -m pip install -e '.[dev]'` with that environment activated. A source checkout does not include the portable Windows executables; normal users can download the Windows asset from [Releases](https://github.com/yangsir2077/pixel-loom/releases).
 
 ```sh

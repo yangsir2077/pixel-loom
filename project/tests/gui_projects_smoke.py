@@ -69,7 +69,7 @@ def main():
             assert len(editor.service.projects.entries)==3
             manager=editor.manage_projects_dialog()
             root.update()
-            assert len(manager.trees[False].get_children())==3
+            assert len(manager.trees['open'].get_children())==3
             external=Path(folder)/'external.pixloom'
             Document(16,16,'Added project').save(external)
             active_id=editor.doc.id
@@ -77,7 +77,7 @@ def main():
                 assert editor.add_existing_projects()==1
             assert editor.doc.id==active_id
             added=editor.service.projects.by_path(external)
-            manager.trees[False].selection_set([first['id'],added['id']])
+            manager.trees['open'].selection_set([first['id'],added['id']])
             root.update()
             with patch('pixel_workbench.ui.messagebox.askyesno',return_value=False):
                 assert manager.remove_selected() is None
@@ -85,13 +85,48 @@ def main():
             with patch('pixel_workbench.ui.messagebox.askyesno',return_value=True):
                 assert manager.remove_selected()
             assert len(editor.service.projects.listing())==2 and external.exists()
-            assert len(manager.trees[True].get_children())==2
-            manager.select_tab(True)
-            manager.trees[True].selection_set([first['id'],added['id']])
+            assert len(manager.trees['deleted'].get_children())==2
+            manager.select_tab('deleted')
+            manager.trees['deleted'].selection_set([first['id'],added['id']])
             assert manager.restore_selected()
             assert len(editor.service.projects.listing())==4
-            manager.select_tab(False)
-            manager.trees[False].selection_set(manager.trees[False].get_children())
+            manager.select_tab('open')
+            root.update()
+            tab=editor.project_tab_buttons[first['id']]
+            assert tab.close_label.cget('text')=='✕'
+            assert tab.name_label.bind('<Button-1>') and tab.close_label.bind('<Button-1>')
+            closed_file=Path(first['path']).read_bytes()
+            assert editor.close_projects([first['id']])
+            root.update()
+            assert len(editor.service.projects.listing())==3
+            assert Path(first['path']).read_bytes()==closed_file
+            assert [entry['id'] for entry in editor.service.projects.listing(closed=True)]==[first['id']]
+            assert first['id'] not in editor.project_tab_buttons
+            manager.refresh()
+            manager.select_tab('closed')
+            root.update()
+            assert len(manager.trees['closed'].get_children())==1
+            manager.trees['closed'].selection_set([first['id']])
+            assert manager.reopen_selected()
+            root.update()
+            assert len(editor.service.projects.listing())==4
+            assert first['id'] in editor.project_tab_buttons
+            assert not editor.service.projects.listing(closed=True)
+            missing=Path(added['path'])
+            moved=missing.with_suffix('.moved')
+            missing.rename(moved)
+            editor.refresh_projects()
+            root.update()
+            unavailable=editor.project_tab_buttons[added['id']]
+            assert not unavailable.name_label.bind('<Button-1>')
+            assert unavailable.close_label.bind('<Button-1>')
+            assert editor.close_projects([added['id']])
+            assert added['id'] not in editor.project_tab_buttons and moved.is_file()
+            moved.rename(missing)
+            assert editor.project_action('reopen',project_id=added['id'])
+            manager.refresh()
+            manager.select_tab('open')
+            manager.trees['open'].selection_set(manager.trees['open'].get_children())
             with patch('pixel_workbench.ui.messagebox.askyesno',return_value=True):
                 assert manager.remove_selected()
             assert editor.path is None and not editor.service.projects.listing()
@@ -108,7 +143,7 @@ def main():
             assert editor.path is None and not editor.service.projects.listing()
             manager=editor.manage_projects_dialog(deleted=True)
             root.update()
-            assert manager.is_deleted() and len(manager.trees[True].get_children())==4
+            assert manager.is_deleted() and len(manager.trees['deleted'].get_children())==4
             manager.dialog.destroy()
             assert not errors,errors
             print(json.dumps({'ok':True,'checks':['numbered project shelf','auto-save outgoing project',

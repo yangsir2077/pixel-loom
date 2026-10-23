@@ -1,5 +1,7 @@
 # Pixel Loom
 
+[Contributors](CONTRIBUTORS.md) · [GitHub contributor graph](https://github.com/yangsir2077/pixel-loom/graphs/contributors)
+
 [中文](README.md) · [Agent guide](docs/AI_GUIDE.md) · [Release preparation](docs/RELEASE.md)
 
 An AI-facing pixel-art tool with documented general drawing/animation operations and a visual editor for humans to inspect results, create artwork, fix small defects and import/save/export. Standard MCP clients and the desktop share editable layers, cels, palette, named regions, project iterations and undo history. Content is planned by the user's own AI.

@@ -206,3 +206,115 @@ class ProjectTests(unittest.TestCase):
         restored=self.call('list')['projects'][0]
         self.assertEqual(restored['id'],entry['id'])
         self.assertEqual(restored['number'],entry['number'])
+
+    def test_close_hides_tab_without_touching_files_or_remove_list(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        path=Path(first['path'])
+        before=path.read_bytes()
+        closed=self.call('close',project_id=first['id'])
+        self.assertEqual(closed['changed_project_ids'],[first['id']])
+        self.assertEqual(path.read_bytes(),before)
+        self.assertEqual([entry['id'] for entry in self.call('list')['projects']],[e['id'] for e in closed['projects'] if e['id']!=first['id']])
+        self.assertEqual([entry['id'] for entry in self.call('closed')['projects']],[first['id']])
+        self.assertFalse(self.call('deleted')['projects'])
+        self.assertEqual(self.call('closed')['projects'][0]['closed'],True)
+
+    def test_close_active_opens_right_neighbour_and_keeps_dirty_pixels(self):
+        self.call('fork',name='Walk')
+        self.call('fork',name='Attack')
+        middle=self.call('list')['projects'][1]
+        right=self.call('list')['projects'][2]
+        self.call('switch',project_id=middle['id'])
+        self.paint()
+        closed=self.call('close',project_id=middle['id'])
+        self.assertEqual(self.service.doc.id,right['document_id'])
+        self.assertEqual(Path(self.service.path).resolve(),Path(right['path']).resolve())
+        self.assertTrue(Document.open(middle['path']).composite().getpixel((2,3))[3])
+        self.assertIn(middle['id'],closed['changed_project_ids'])
+        self.assertIn(middle['id'],[entry['id'] for entry in self.call('closed')['projects']])
+
+    def test_close_active_without_neighbour_leaves_clean_workspace(self):
+        entry=self.service.checkpoint_current()
+        self.assertEqual(self.call('list')['projects'][0]['id'],entry['id'])
+        result=self.call('close',project_id=entry['id'])
+        self.assertFalse(result['projects'])
+        self.assertIsNone(self.service.path)
+        self.assertFalse(self.service.dirty)
+        self.assertTrue(Path(entry['path']).is_file())
+
+    def test_close_active_finds_farther_valid_right_tab(self):
+        for name in ('Walk','Attack','Dodge'):self.call('fork',name=name)
+        entries=self.call('list')['projects']
+        self.call('switch',project_id=entries[1]['id'])
+        self.paint()
+        Path(entries[0]['path']).unlink()
+        Path(entries[2]['path']).write_text('corrupt fixture',encoding='utf-8')
+        self.call('close',project_id=entries[1]['id'])
+        self.assertEqual(self.service.doc.id,entries[3]['document_id'])
+        self.assertTrue(Document.open(entries[1]['path']).composite().getpixel((2,3))[3])
+
+    def test_close_active_finds_farther_valid_left_tab(self):
+        for name in ('Walk','Attack','Dodge'):self.call('fork',name=name)
+        entries=self.call('list')['projects']
+        self.call('switch',project_id=entries[2]['id'])
+        Path(entries[1]['path']).write_text('corrupt fixture',encoding='utf-8')
+        Path(entries[3]['path']).unlink()
+        self.call('close',project_id=entries[2]['id'])
+        self.assertEqual(self.service.doc.id,entries[0]['document_id'])
+
+    def test_close_prefers_explicit_surviving_tab_over_nearest_neighbour(self):
+        for name in ('Walk','Attack'):self.call('fork',name=name)
+        entries=self.call('list')['projects']
+        self.call('switch',project_id=entries[1]['id'])
+        result=self.call('close',project_id=entries[1]['id'],keep_project_id=entries[0]['id'])
+        self.assertEqual(self.service.doc.id,entries[0]['document_id'])
+        self.assertEqual(result['changed_project_ids'],[entries[1]['id']])
+        self.assertTrue(Path(entries[1]['path']).is_file())
+
+    def test_close_persists_across_restart_and_reopen_restores_same_identity(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        self.call('close',project_ids=[first['id']])
+        restart=DocumentService(workspace=self.service.workspace,runtime=self.service.runtime)
+        self.assertEqual(len(restart.projects.listing()),1)
+        self.assertEqual([e['id'] for e in restart.projects.listing(closed=True)],[first['id']])
+        reopened=restart.projects_action(dict(action='reopen',project_ids=[first['id']],
+                                              expected_document_id=restart.doc.id,expected_revision=restart.doc.revision))
+        self.assertEqual(reopened['changed_project_ids'],[first['id']])
+        self.assertEqual([e['id'] for e in restart.projects.listing()],
+                         [e['id'] for e in reopened['projects']])
+        self.assertIn(first['id'],[e['id'] for e in restart.projects.listing()])
+        self.assertFalse(restart.projects.listing(closed=True))
+        self.assertEqual(restart.projects.by_path(first['path'])['number'],first['number'])
+
+    def test_switching_to_a_closed_project_reopens_its_tab(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        active=self.service.projects.by_path(self.service.path)
+        self.call('close',project_id=first['id'])
+        self.assertEqual(len(self.call('list')['projects']),1)
+        self.call('switch',project_id=first['id'])
+        self.assertEqual(self.service.doc.id,first['document_id'])
+        self.assertEqual(len(self.call('list')['projects']),2)
+        self.assertFalse(self.call('closed')['projects'])
+        self.assertEqual(self.service.projects.by_path(active['path'])['id'],active['id'])
+
+    def test_remove_clears_the_closed_flag(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        self.call('close',project_id=first['id'])
+        self.call('remove',project_id=first['id'])
+        self.assertFalse(self.call('closed')['projects'])
+        self.assertEqual([e['id'] for e in self.call('deleted')['projects']],[first['id']])
+        self.call('undelete',project_id=first['id'])
+        self.assertIn(first['id'],[e['id'] for e in self.call('list')['projects']])
+
+    def test_close_rejects_unknown_ids_without_changing_tabs(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        before=self.service.projects.entries
+        with self.assertRaises(PixelError):self.call('close',project_ids=[first['id'],'missing'])
+        self.assertEqual(self.service.projects.entries,before)
+        self.assertEqual(len(self.call('list')['projects']),2)
+
+    def test_project_library_counts_separate_open_and_closed(self):
+        first=self.call('fork',name='Walk')['projects'][0]
+        self.call('close',project_id=first['id'])
+        library=self.service.state()['project_library']
+        self.assertEqual((library['count'],library['open_count'],library['closed_count'],library['deleted_count']),(2,1,1,0))

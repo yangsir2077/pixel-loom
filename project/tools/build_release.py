@@ -9,7 +9,7 @@ import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP = ["README.md", "README.en.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md",
+TOP = ["README.md", "README.en.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "CONTRIBUTORS.md", "SECURITY.md",
        "THIRD_PARTY_NOTICES.md", "AGENTS.md", "CLAUDE.md", ".gitignore", "MANIFEST.in", "pyproject.toml", "requirements.txt",
        "setup.ps1", "launch.ps1", "打开像素织机.cmd", "mcp_server.py"]
 TREES = ["pixel_workbench", "skills", "tests", ".github"]

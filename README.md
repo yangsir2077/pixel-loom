@@ -148,6 +148,8 @@ AI 先读 `pixel_help(topic="cleanup")`。使用 `pixel_storage(action="status")
 
 ## 6. 开发和开源
 
+感谢社区参与改进：[贡献者名单](project/CONTRIBUTORS.md) · [GitHub 自动贡献统计](https://github.com/yangsir2077/pixel-loom/graphs/contributors)。
+
 完整源码和正式测试都在 `project`。需要 **Python 3.11+**，桌面模式还需要 Tk（Windows 标准 Python 通常自带）。以下命令从克隆／源码 ZIP 解压后的仓库根目录执行；若当前目录已经有 `pyproject.toml`，则跳过第一行：
 
 ```powershell

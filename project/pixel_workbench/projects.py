@@ -92,6 +92,7 @@ class ProjectLibrary:
         entry.update(name=doc.name, document_id=doc.id, width=doc.width, height=doc.height,
                      frames=len(doc.durations), duration_ms=sum(doc.durations), disk_sha256=file_digest(path))
         entry.pop('deleted_at',None)  # Explicitly opening/adding its file restores the same project identity.
+        entry.pop('closed_at',None)   # Re-adding a file reopens its tab as well.
         self.persist()
         # Edits made before the first Save belong to this project too.
         pending = self.draft_history(doc.id)
@@ -107,11 +108,20 @@ class ProjectLibrary:
             pending.rmdir()
         return entry
 
-    def listing(self, active_path=None, deleted=False, page=None, limit=20):
+    def scoped(self, scope='open'):
+        """Shelf membership: open tabs, closed tabs and removed projects are disjoint."""
+        if scope == 'deleted':
+            return [e for e in self.entries if e.get('deleted_at')]
+        if scope == 'closed':
+            return [e for e in self.entries if e.get('closed_at') and not e.get('deleted_at')]
+        return [e for e in self.entries if not e.get('deleted_at') and not e.get('closed_at')]
+
+    def listing(self, active_path=None, deleted=False, page=None, limit=20, closed=False):
         active = path_key(active_path) if active_path else None
-        entries=[e for e in self.entries if bool(e.get('deleted_at'))==deleted]
+        entries=self.scoped('deleted' if deleted else 'closed' if closed else 'open')
         if page is not None:entries=entries[page*limit:(page+1)*limit]
         return [{**entry, 'active': path_key(entry['path']) == active,
+                 'closed': bool(entry.get('closed_at')),
                  'available': Path(entry['path']).is_file()} for entry in entries]
 
     def set_deleted(self, project_ids, deleted=True):
@@ -122,8 +132,27 @@ class ProjectLibrary:
         stamp=datetime.now(timezone.utc).isoformat()
         try:
             for entry in selected:
-                if deleted:entry['deleted_at']=stamp
+                if deleted:
+                    entry['deleted_at']=stamp
+                    entry.pop('closed_at',None)  # A removed project is not also a closed tab.
                 else:entry.pop('deleted_at',None)
+            self.persist()
+        except (OSError,ValueError):
+            self.entries=previous
+            raise
+        return selected
+
+    def set_closed(self, project_ids, closed=True):
+        """Hide shelf tabs; the project file, its versions and its id are untouched."""
+        if not isinstance(project_ids,list) or not 1<=len(project_ids)<=256 or any(not isinstance(key,str) for key in project_ids):
+            raise PixelError('Choose 1–256 project ids')
+        selected=[self.get(key) for key in dict.fromkeys(project_ids)]
+        previous=deepcopy(self.entries)
+        stamp=datetime.now(timezone.utc).isoformat()
+        try:
+            for entry in selected:
+                if closed:entry['closed_at']=stamp
+                else:entry.pop('closed_at',None)
             self.persist()
         except (OSError,ValueError):
             self.entries=previous

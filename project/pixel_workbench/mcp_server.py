@@ -245,12 +245,13 @@ def pixel_workspace() -> CallToolResult:
 
 @server.tool(annotations=EDIT, structured_output=False)
 @safe
-def pixel_projects(action: Literal['list','register','fork','new','switch','versions','restore','version_preview','use_version','version_pin','compare','remove','deleted','undelete']='list',
+def pixel_projects(action: Literal['list','register','fork','new','switch','versions','restore','version_preview','use_version','version_pin','compare','close','closed','reopen','remove','deleted','undelete']='list',
                    project_id: str | None=None, project_ids: list[str] | None=None,
                    path: str | None=None, name: str | None=None, version_id: str | None=None,
                    width: int=48, height: int=48, view: Literal['contact','time']='contact',
                    page: int=0, time_ms: int=0, limit: int=20, pinned: bool | None=None,
-                   expected_revision: int | None=None, expected_document_id: str | None=None, compact: bool=False) -> CallToolResult:
+                   expected_revision: int | None=None, expected_document_id: str | None=None, compact: bool=False,
+                   keep_project_id: str | None=None) -> CallToolResult:
     """Retain separate projects instead of overwriting an earlier animation.
 
     list returns ordered numbered projects and stable project ids. register adds an existing .pixloom without switching.
@@ -266,6 +267,10 @@ def pixel_projects(action: Literal['list','register','fork','new','switch','vers
     remove accepts project_id or project_ids; it removes shelf entries reversibly, preserving original files and history.
     Removing the active project saves it and opens a remaining project or a clean empty workspace. deleted lists
     removed projects; undelete restores their original ids/numbers. No permanent disk deletion is exposed here.
+    close accepts project_id or project_ids and only hides those shelf tabs: files, versions, numbers and ids are
+    untouched, so it is the cheapest way to declutter a long shelf. Closing the active project saves it and opens a
+    surviving tab (keep_project_id to choose, else the next tab to the right, else the left). closed lists hidden
+    tabs; reopen restores them. Close is not remove: use remove/deleted/undelete for the remove list.
     compare needs 2–4 project_ids: contact returns up to eight frames per project/page with timing; fetch all pages.
     time compares frames at real elapsed time_ms. Comparisons are read-only snapshots including active unsaved work.
     Pass observed document/revision tokens for writes; read fresh tokens after switching/forking. Existing new/open
@@ -273,11 +278,11 @@ def pixel_projects(action: Literal['list','register','fork','new','switch','vers
     """
     payload={key:value for key,value in locals().items() if value is not None and key!='compact'}
     client=ensure_editor()
-    if action in ('list','deleted','versions','compare','version_preview'):
+    if action in ('list','deleted','closed','versions','compare','version_preview'):
         response=client.request('/projects',payload)
     else:
         response=client.mutate('/projects',payload,expected_revision,expected_document_id)
-    if action not in ('list','deleted','versions','compare','version_preview') and 'projects' in response and 'project_list_paging' not in response:
+    if action not in ('list','deleted','closed','versions','compare','version_preview') and 'projects' in response and 'project_list_paging' not in response:
         listing=paged(response['projects'],0,limit)
         response['projects']=listing.pop('items')
         response['project_list_paging']=listing

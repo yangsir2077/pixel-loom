@@ -1,6 +1,6 @@
 # Pixel Loom · 像素织机
 
-[English](README.en.md) · [使用手册](docs/USER_GUIDE.md) · [AI 使用指南](docs/AI_GUIDE.md) · [更新记录](CHANGELOG.md)
+[English](README.en.md) · [使用手册](docs/USER_GUIDE.md) · [AI 使用指南](docs/AI_GUIDE.md) · [更新记录](CHANGELOG.md) · [贡献者](CONTRIBUTORS.md)
 
 面向 AI 的像素创作工具，以及供用户查看、创作和修改作品的可视化编辑器。配套说明帮助 AI 使用通用绘图与动画工具；用户直观看到产物、手动修细节，并使用导入、保存、导出和版本记录。支持 MCP 的 AI 客户端通过标准 **MCP / stdio** 直接调用原生工具。免费开源，采用 [MIT](LICENSE) 许可。
 

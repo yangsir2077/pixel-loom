@@ -14,7 +14,9 @@ from .ui import BG, PANEL, FIELD, FG, MUTED, SMALL, place_dialog, scrollable_wid
 
 
 class ProjectManagerDialog:
-    def __init__(self,editor,deleted=False):
+    scopes=(('open','项目'),('deleted','已删除'),('closed','已收起'))
+
+    def __init__(self,editor,scope='open'):
         self.editor=editor
         self.dialog=d=tk.Toplevel(editor.root)
         d.title('项目管理 · 添加 / 删除 / 恢复')
@@ -26,7 +28,7 @@ class ProjectManagerDialog:
         header.pack(fill='x')
         editor.label(header,'我的项目',font=('Microsoft YaHei UI',15,'bold')).pack(side='left')
         editor.button(header,'添加已有项目…',editor.add_existing_projects,True,font=SMALL).pack(side='right')
-        editor.label(d,'项目可自由添加或删除。删除后保留工程文件与历史版本，可在“已删除”中恢复。',MUTED,SMALL).pack(anchor='w',padx=18,pady=(0,12))
+        editor.label(d,'项目可自由添加或删除。删除后保留工程文件与历史版本，可在“已删除”中恢复；关闭标签页只是从项目栏收起，工程与版本记录完全不变。',MUTED,SMALL).pack(anchor='w',padx=18,pady=(0,12))
         footer=tk.Frame(d,bg=PANEL,padx=18,pady=12)
         footer.pack(side='bottom',fill='x')
         editor.button(footer,'关闭',d.destroy,font=SMALL).pack(side='right')
@@ -36,6 +38,8 @@ class ProjectManagerDialog:
         self.remove_button.pack(side='left',padx=8)
         self.restore_button=editor.button(footer,'恢复所选',self.restore_selected,True,font=SMALL)
         self.restore_button.pack(side='left')
+        self.reopen_button=editor.button(footer,'重新打开所选',self.reopen_selected,True,font=SMALL)
+        self.reopen_button.pack(side='left',padx=8)
         self.purge_button=editor.button(footer,'彻底清理所选',self.purge_selected,font=SMALL)
         self.purge_button.pack(side='left',padx=8)
         self.path_label=editor.label(d,'',MUTED,SMALL,wraplength=840,justify='left')
@@ -47,7 +51,7 @@ class ProjectManagerDialog:
         style.configure('Projects.Treeview.Heading',background=FIELD,foreground=FG,font=SMALL)
         style.map('Projects.Treeview',background=[('selected','#354b70')],foreground=[('selected',FG)])
         self.trees={}
-        for archived,title in [(False,'项目'),(True,'已删除')]:
+        for name,title in self.scopes:
             page=tk.Frame(self.notebook,bg=PANEL)
             self.notebook.add(page,text=title)
             tree=ttk.Treeview(page,columns=('number','name','frames','status'),show='headings',selectmode='extended',style='Projects.Treeview')
@@ -60,26 +64,30 @@ class ProjectManagerDialog:
             tree.pack(fill='both',expand=True)
             tree.bind('<<TreeviewSelect>>',lambda event:self.update_selection())
             tree.bind('<Double-Button-1>',lambda event:self.open_selected())
-            self.trees[archived]=tree
+            self.trees[name]=tree
         self.notebook.bind('<<NotebookTabChanged>>',lambda event:self.update_selection())
-        self.select_tab(deleted)
+        self.select_tab(scope)
         self.refresh()
         self.poll_job=d.after(1000,self.poll)
         d.bind('<Destroy>',self.cleanup,add='+')
 
-    def select_tab(self,deleted):
-        self.notebook.select(1 if deleted else 0)
+    def select_tab(self,scope):
+        names=[name for name,_ in self.scopes]
+        self.notebook.select(names.index(scope) if scope in names else 0)
+
+    def current_scope(self):
+        return [name for name,_ in self.scopes][self.notebook.index(self.notebook.select())]
 
     def is_deleted(self):
-        return self.notebook.index(self.notebook.select())==1
+        return self.current_scope()=='deleted'
 
     def selected_ids(self):
-        return list(self.trees[self.is_deleted()].selection())
+        return list(self.trees[self.current_scope()].selection())
 
     def refresh(self):
-        for deleted,tree in self.trees.items():
+        for name,tree in self.trees.items():
             selected=tree.selection()
-            entries=self.editor.service.projects.listing(self.editor.path,deleted=deleted)
+            entries=self.editor.service.projects.listing(self.editor.path,deleted=name=='deleted',closed=name=='closed')
             signature=tuple((e['id'],e['name'],e['frames'],e['width'],e['height'],e['active'],e['available']) for e in entries)
             if getattr(tree,'project_signature',None)==signature:continue
             old_rows=tree.get_children()
@@ -88,7 +96,8 @@ class ProjectManagerDialog:
             tree.project_signature=signature
             tree.delete(*tree.get_children())
             for entry in entries:
-                status='文件已移动' if not entry['available'] else '可恢复' if deleted else '当前打开' if entry['active'] else '已保存'
+                status=('文件已移动' if not entry['available'] else '可恢复' if name=='deleted'
+                        else '已收起' if name=='closed' else '当前打开' if entry['active'] else '已保存')
                 tree.insert('','end',iid=entry['id'],values=(entry['number'],entry['name'],f"{entry['width']}×{entry['height']} · {entry['frames']}帧",status))
             kept=[key for key in selected if tree.exists(key)]
             if kept:tree.selection_set(kept)
@@ -97,12 +106,13 @@ class ProjectManagerDialog:
         self.update_selection()
 
     def update_selection(self):
-        deleted=self.is_deleted()
+        scope=self.current_scope()
         selected=self.selected_ids()
-        self.remove_button.config(state='normal' if selected and not deleted else 'disabled')
-        self.restore_button.config(state='normal' if selected and deleted else 'disabled')
-        self.purge_button.config(state='normal' if selected and deleted else 'disabled')
-        self.open_button.config(state='normal' if len(selected)==1 and not deleted else 'disabled')
+        self.remove_button.config(state='normal' if selected and scope=='open' else 'disabled')
+        self.restore_button.config(state='normal' if selected and scope=='deleted' else 'disabled')
+        self.reopen_button.config(state='normal' if selected and scope=='closed' else 'disabled')
+        self.purge_button.config(state='normal' if selected and scope=='deleted' else 'disabled')
+        self.open_button.config(state='normal' if len(selected)==1 and scope=='open' else 'disabled')
         if selected:
             entry=self.editor.service.projects.get(selected[0],include_deleted=True)
             self.path_label.config(text=entry['path']+(f'\n已选择 {len(selected)} 个项目' if len(selected)>1 else ''))
@@ -110,16 +120,19 @@ class ProjectManagerDialog:
 
     def open_selected(self):
         selected=self.selected_ids()
-        if len(selected)==1 and not self.is_deleted():self.editor.project_action('switch',project_id=selected[0])
+        if len(selected)==1 and self.current_scope()=='open':self.editor.project_action('switch',project_id=selected[0])
 
     def remove_selected(self):
-        if self.selected_ids() and not self.is_deleted():return self.editor.delete_projects(self.selected_ids())
+        if self.selected_ids() and self.current_scope()=='open':return self.editor.delete_projects(self.selected_ids())
 
     def restore_selected(self):
-        if self.selected_ids() and self.is_deleted():return self.editor.project_action('undelete',project_ids=self.selected_ids())
+        if self.selected_ids() and self.current_scope()=='deleted':return self.editor.project_action('undelete',project_ids=self.selected_ids())
+
+    def reopen_selected(self):
+        if self.selected_ids() and self.current_scope()=='closed':return self.editor.project_action('reopen',project_ids=self.selected_ids())
 
     def purge_selected(self):
-        if self.selected_ids() and self.is_deleted():
+        if self.selected_ids() and self.current_scope()=='deleted':
             return self.editor.storage_dialog({'targets':['deleted_projects'],
                 'deleted_project_ids':self.selected_ids(),'older_than_days':0})
 

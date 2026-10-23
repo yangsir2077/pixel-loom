@@ -1223,7 +1223,7 @@ class Editor(DesktopUI):
             path == '/storage' and payload.get('action','status') in ('status','plan')) or (
             path == "/character" and payload.get("action", "status") in ("status", "save")) or (
             path=="/feedback" and payload.get("action") in ("list","inspect")) or (
-            path=='/projects' and payload.get('action','list') in ('list','deleted','versions','compare','version_preview'))
+            path=='/projects' and payload.get('action','list') in ('list','deleted','closed','versions','compare','version_preview'))
         view_only = path == "/command" and bool(payload.get("ops")) and all(
             op.get("op") in ("select", "selection_set") for op in payload["ops"])
         if method == "POST" and not read_only_preview:

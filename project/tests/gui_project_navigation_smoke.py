@@ -74,7 +74,7 @@ def main():
             editor.project_all_button.invoke()
             root.update()
             manager=editor.project_manager
-            tree=manager.trees[False]
+            tree=manager.trees['open']
             assert len(tree.get_children())==28
             tree.selection_set(entries[0]['id'])
             manager.open_selected()

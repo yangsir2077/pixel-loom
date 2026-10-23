@@ -175,7 +175,7 @@ def main():
                 editor.service.projects.register(path, doc)
             manager = editor.manage_projects_dialog()
             root.update()
-            tree = manager.trees[False]
+            tree = manager.trees['open']
             tree.yview_moveto(.5)
             before = tree.yview()[0]
             changed = Document.open(base / "project-0.pixloom")

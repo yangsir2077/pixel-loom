@@ -27,8 +27,10 @@ async def run(server_executable=None):
                 assert "action='fork'" in init.instructions
                 sessions.append(session)
             first,second=sessions
-            tools = {item.name for item in (await first.list_tools()).tools}
+            definitions = {item.name:item for item in (await first.list_tools()).tools}
+            tools = set(definitions)
             assert 'pixel_effect' not in tools and 'pixel_edit' in tools
+            assert 'keep_project_id' in definitions['pixel_projects'].inputSchema['properties']
             guide=data(await first.call_tool('pixel_onboard',{}))
             state=guide['current_document']
             def tokens(state):return dict(expected_revision=state['revision'],expected_document_id=state['document_id'])
@@ -77,7 +79,21 @@ async def run(server_executable=None):
                 version_id=versions['versions'][0]['id'],name='Recovered walk',**tokens(switched))))
             assert restored['document_id'] not in (idle_entry['document_id'],walk_entry['document_id'])
             assert len(restored['projects'])==3
-            removed=data(await first.call_tool('pixel_projects',dict(action='remove',project_id=idle_entry['id'],**tokens(restored))))
+            closed=data(await first.call_tool('pixel_projects',dict(action='close',project_id=idle_entry['id'],**tokens(restored))))
+            assert len(closed['projects'])==2 and Path(idle_entry['path']).is_file()
+            assert idle_entry['id'] not in [entry['id'] for entry in closed['projects']]
+            hidden=data(await second.call_tool('pixel_projects',dict(action='closed')))
+            assert [entry['id'] for entry in hidden['projects']]==[idle_entry['id']]
+            assert not data(await second.call_tool('pixel_projects',dict(action='deleted')))['projects']
+            reopened=data(await second.call_tool('pixel_projects',dict(action='reopen',project_id=idle_entry['id'],**tokens(closed))))
+            assert len(reopened['projects'])==3 and idle_entry['id'] in [entry['id'] for entry in reopened['projects']]
+            assert not data(await second.call_tool('pixel_projects',dict(action='closed')))['projects']
+            selected=data(await first.call_tool('pixel_projects',dict(action='switch',project_id=walk_entry['id'],**tokens(reopened))))
+            kept=data(await second.call_tool('pixel_projects',dict(action='close',project_id=walk_entry['id'],
+                keep_project_id=idle_entry['id'],**tokens(selected))))
+            assert kept['document_id']==idle_entry['document_id']
+            reopened=data(await first.call_tool('pixel_projects',dict(action='reopen',project_id=walk_entry['id'],**tokens(kept))))
+            removed=data(await first.call_tool('pixel_projects',dict(action='remove',project_id=idle_entry['id'],**tokens(reopened))))
             assert len(removed['projects'])==2 and removed['files_preserved'] and Path(idle_entry['path']).is_file()
             deleted=data(await second.call_tool('pixel_projects',dict(action='deleted')))
             assert deleted['projects'][0]['id']==idle_entry['id']
@@ -92,7 +108,8 @@ async def run(server_executable=None):
             print(json.dumps({'ok':True,'clients':2,'checks':['discover project preservation instructions',
                 'independent project identities and paths','checkpoint dirty source','no idle overwrite',
                 'paged paired frame evidence','read-only compare preserves dirty state','shared project switch',
-                'pre-save versions','restore as separate project','reversible remove preserves files/history',
+                'pre-save versions','restore as separate project','close hides a tab without touching its file',
+                'closed list through second client','reopen restores the tab','reversible remove preserves files/history',
                 'deleted list through second client','restore original ids/numbers','remove all leaves empty shelf']}))
         from pixel_workbench.cli import Client
         session_path=root/'data/runtime/session.json'

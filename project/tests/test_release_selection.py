@@ -20,6 +20,7 @@ class ReleaseSelectionTests(unittest.TestCase):
             selected={p.relative_to(root).as_posix() for p in source_files(root)}
             self.assertTrue({f'docs/{name}' for name in DOCS} <= selected)
             self.assertIn('tests/test_formal.py',selected)
+            self.assertIn('CONTRIBUTORS.md',selected)
             self.assertIn('pixel_workbench/resources/ART_DIRECTION.md',selected)
             self.assertFalse(any('DESIGN_PLAN' in name or '/drafts/' in name or '__pycache__' in name for name in selected))
             copy_documentation(target,root)

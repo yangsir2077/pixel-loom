@@ -38,7 +38,7 @@ Use compact=True for onboard/status/edit/validate/projects and project/feedback/
 | `pixel_task` | Bounded local task brief, scope, part checks and next action without changing artwork/history |
 | `pixel_art_board` | Read-only whole/detail/reference comparison from optional direction notes; unchanged image reuse |
 | `pixel_generation` | Host prompt handoff, local original/draft preview, apply chosen candidate as a preserved new project |
-| `pixel_projects` | Numbered retained works, fork/new/switch, saved versions, non-destructive restore and paired frame evidence |
+| `pixel_projects` | Numbered retained works, fork/new/switch, saved versions, non-destructive restore, tab close/reopen and paired frame evidence |
 | `pixel_help` | Focused operation schemas/examples or an operation catalog |
 | `pixel_character` | Portable approved pose/palette/fixed regions/views; actual images; .pixelchar import/export |
 | `pixel_motion_check` | Read-only suspect frame/ROI findings with immutable paged before/current/after images |
@@ -68,7 +68,7 @@ For a different animation/action, first call `pixel_projects(action="fork", name
 
 `action="compare", project_ids=[...], page=0` returns up to eight frame thumbnails per project with durations; fetch all pages. `view="time", time_ms=...` compares actual timed poses. It includes active unsaved pixels and never edits or switches projects. `versions` lists pre-save snapshots; `restore` opens the chosen version as a separate project. The application does not infer a user's new-action intent from pixels; the connected AI must follow this preservation workflow.
 
-Project lists are persistent user data. `register(path=...)` adds an existing `.pixloom` file without switching. Only when the user requests removal, use `remove(project_id=...)` or `project_ids=[...]`; this hides projects reversibly and keeps their files/history. Removing the active project saves it first and selects another project or a clean empty workspace. `deleted` lists removed entries; `undelete` restores their original ids/numbers. Do not remove earlier works just to tidy the shelf. The desktop exposes these controls under Manage projects and right-click project tabs.
+Project lists are persistent user data. `register(path=...)` adds an existing `.pixloom` file without switching. Tidy a long shelf with `close(project_id=...)` or `project_ids=[...]`: that only hides the project's tab, so its file, id, number and versions are untouched and it does not enter the remove list. Closing the active project saves it first and opens a neighbouring tab (or a clean empty workspace when none remains). `closed` lists hidden tabs and `reopen` restores them; switching to a closed project also reopens its tab. Only when the user requests removal, use `remove(project_id=...)` or `project_ids=[...]`; removed projects leave the shelf and their files/history stay on disk. `deleted` lists removed entries; `undelete` restores their original ids/numbers. Do not remove earlier works just to tidy the shelf. The desktop exposes close / close-left / close-right / close-others on right-click and via the × on each project tab, and manage/reopen under Manage projects.
 
 ## Screenshot feedback (0.6.1)
 

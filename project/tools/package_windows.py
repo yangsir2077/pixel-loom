@@ -101,7 +101,7 @@ def main():
     folder = args.folder.resolve()
     if not (folder / "PixelLoom.exe").exists() or not (folder / "PixelLoomMCP.exe").exists():
         raise SystemExit("Build tools/windows.spec first")
-    for name in ("README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md"):
+    for name in ("README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", "CONTRIBUTORS.md"):
         shutil.copy2(ROOT / name, folder / name)
     copy_documentation(folder)
     shutil.copytree(ROOT / "skills", folder / "skills", dirs_exist_ok=True)
