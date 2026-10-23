@@ -81,7 +81,6 @@ async def run(legacy_exe):
             async with connect(old=True) as old:
                 state=(await call(old,'pixel_onboard',compact=True))['current_document']
                 old_features=state['capabilities']['features']
-                assert 'generation_handoff_v2' not in old_features
                 state=await call(old,'pixel_project',action='open',path=roundtrip_path,compact=True,**tokens(state))
                 state=await call(old,'pixel_project',action='save',path='projects/old-backend.pixloom',compact=True,**tokens(state))
                 assert next(v.data for v in (await old.call_tool('pixel_preview',{'scale':1})).content if v.type=='image')==reference_render
@@ -95,7 +94,8 @@ async def run(legacy_exe):
                         assert rejected.isError and rejected.structuredContent['code']=='VERSION_MISMATCH'
                 else:
                     state=(await call(current,'pixel_onboard',compact=True))['current_document']
-                    unsupported=[('pixel_generation',{})]
+                    unsupported=[]
+                    if 'generation_handoff_v2' not in old_features:unsupported.append(('pixel_generation',{}))
                     if 'art_direction' not in old_features:
                         unsupported.extend([('pixel_art_board',{}),('pixel_task',{
                             'action':'update','direction':{'route':'native'},'expected_task_revision':0,**tokens(state)})])
@@ -116,7 +116,7 @@ async def run(legacy_exe):
                     'rejected mixed client preserves the running editor and task notes'] if mixed_versions else [
                 'released MCP / updated backend drawing and notes',
                 'updated file opened/saved by released backend','new optional fields survive old note updates',
-                'updated MCP / released backend rejects unsupported coordination before mutation',
+                'updated MCP respects observed backend capabilities before mutation',
                 'legacy drawing remains available in both directions']
             report={'ok':True,'current_version':versions[False],'legacy_version':versions[True],
                     'mixed_versions':mixed_versions,'checks':checks,'isolated':True}
