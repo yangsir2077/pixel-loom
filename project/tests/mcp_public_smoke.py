@@ -110,7 +110,8 @@ async def run(artifacts=None, server_executable=None):
                 shutil.copy2(workspace / "exports" / "public.gif", destination / "quickstart.gif")
                 image = next(block for block in contact.content if block.type == "image")
                 (destination / "contact-sheet.png").write_bytes(base64.b64decode(image.data))
-            summary = {"ok": True, "clients": 2, "tools": len(names), "native_operations": 43,
+            from pixel_workbench.operations import SPECS
+            summary = {"ok": True, "clients": 2, "tools": len(names), "native_operations": len(SPECS),
                        "resources": len(resources.resources), "prompts": len(prompts.prompts),
                        "checks": ["portable module launch", "typed operation discovery", "onboarding recipe", "dry-run image",
                                   "native polygon/curve drawing", "retry idempotency", "structured conflicts", "unsaved protection",

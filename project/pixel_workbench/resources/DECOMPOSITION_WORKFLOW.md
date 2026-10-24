@@ -9,6 +9,8 @@ View source native size and integer zoom. Record a brief analysis: viewpoint/pro
 
 Keep untouched source hidden/locked. Create semantic layers around actual objects and independent editing responsibilities. Use observed stable IDs. A mask may contain the wrong foreground fragment even if its outline looks plausible. More layers or matching rest composite DOES NOT prove clean extraction.
 
+For requested pose/motion, identify coupled parts too: a hand and its held object share a grip; a sleeve follows its arm; attached flexible parts retain their root. Record the useful anchors/overlap order in the existing task notes. Splitting layers does not itself establish these relationships or fill occluded surfaces.
+
 Native region_copy polygon and holes preserve original RGBA. Coordinates are absolute SOURCE positions; query exact schema. Exclude occluder fragments from the rear part. Keep actual background in its own layer unless removal requested. Preserve all visible source pixels and avoid overlaps that duplicate semi-transparent pixels.
 
 ## Two complementary checks

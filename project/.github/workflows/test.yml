@@ -23,6 +23,7 @@ jobs:
       - run: python -m tests.mcp_export_formats_smoke
       - run: python -m tests.mcp_creation_smoke
       - run: python -m tests.mcp_task_smoke
+      - run: python -m tests.mcp_material_smoke
       - run: python -m tests.mcp_art_direction_smoke
       - run: python -m tests.mcp_art_concurrency_smoke
       - run: python -m tests.mcp_reference_smoke
@@ -63,6 +64,8 @@ jobs:
       - run: python -m tests.gui_project_navigation_smoke
         if: runner.os == 'Windows'
       - run: python -m tests.gui_workflow_smoke
+        if: runner.os == 'Windows'
+      - run: python -m tests.gui_material_smoke
         if: runner.os == 'Windows'
       - run: python -m tests.gui_art_direction_smoke
         if: runner.os == 'Windows'

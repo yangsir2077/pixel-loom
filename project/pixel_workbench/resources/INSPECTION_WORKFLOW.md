@@ -29,6 +29,8 @@ Inspect a normal-size view for readability and enlarged views for pixel problems
 
 For source-based local edits, compare source and result at the same logical dimensions and integer zoom. Check retained texture, folds, fingers, cuffs and outline treatment as well as silhouette. Unrequested resolution reduction or visibly simpler replacement surfaces are fidelity defects even when the character is still recognizable.
 
+Compare the relevant poses with the checked static identity baseline: face/features, markings, outfit and material ramps stay consistent unless their change was requested. Distinguish intended pose/parent movement from identity drift. At motion boundaries inspect both adjoining frames, attachment/grip continuity and mask ownership, not just one attractive still. A loop closes last-to-first; requested action-to-idle entry/exit is a separate transition, not a reason to connect every atlas tag.
+
 For extracted art follow decomposition_workflow: view every complete isolated object layer AND composite. Check foreign fragments, cut visible contours and ownership; a matching rest composite or high layer count is insufficient. Only requested completion requires hidden-surface continuity; only requested movement needs trial poses and all-frame inspection. pixel_task clean/complete needs fresh isolated-preview evidence, but remains the AI's visual report. Human rejection overrides prior AI/numeric passes. Conditional image keys can reuse already viewed unchanged evidence; inspect new images after edits.
 
 ## 3. Measure concrete invariants where useful
@@ -40,6 +42,8 @@ For engine-targeted tiles, inspect an actual assembled map and validate import, 
 ## 4. Repair and collect NEW evidence
 
 Fix observed defects with pixel_edit on the correct frame/layer/clip using current document/revision tokens. Clear stale moving pixels before rebuilding a contour. Preserve unrelated artwork and named fixed parts.
+
+If the same defect remains after a targeted repair or recurs a second time, stop repeating the same prompt/patch. Diagnose the source/key pose, mask ownership, pivot, coupled joints, overlap order, clipping or timing as appropriate. Change that cause before generating more in-betweens. Record only the concrete symptom and next changed strategy in existing pixel_task notes/next_action; no extra workflow or retry counter is required. Identity drift: compare/recover the affected scope from the retained baseline/version and replan local motion. Broken seams: fix the relevant connection/mask, not a prescribed number of pixels. Isolated pixels may be intentional small features or particles; remove only verified defects. Missing hidden surfaces still need the human's requested scope before painting.
 
 Content or requirements changed -> reviews depending on those pixels/timing/requirements become stale. A run-only edit preserves an unchanged idle review. Changed shared layers, canvas, reference/character inputs or applicable requirements invalidate dependent scopes. Tag range/direction changes require that action's fresh review. Old records keep their conservative whole-document digest semantics. Obtain a NEW pixel_review for affected actions and inspect the changed evidence. Do not reuse stale reports or ask the human to approve every routine reversible correction.
 

@@ -40,7 +40,7 @@ def main(argv=None):
         from .paths import description
         from .updates import API_URL
         result = {"version": __version__, "python": sys.version.split()[0], "executable": sys.executable,
-                  "paths": description(), "dependencies": {name: importlib.metadata.version(name) for name in ("Pillow", "mcp", "jsonschema")}}
+                  "paths": description(), "dependencies": {name: importlib.metadata.version(name) for name in ("Pillow", "numpy", "mcp", "jsonschema")}}
         result["updates"] = {"release_source": API_URL, "startup_checks": "desktop only",
                              "download_behavior": "browser on explicit click"}
         try:

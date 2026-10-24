@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixel-loom"
-version = "0.7.18"
+version = "0.7.19"
 description = "A local pixel-art editor with first-class MCP tools for humans and AI agents"
 readme = "README.en.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Pixel Loom contributors" }]
-dependencies = ["Pillow>=10.3,<13", "mcp>=1.30,<2", "jsonschema>=4.20,<5", "pywin32>=306; sys_platform == 'win32'"]
+dependencies = ["Pillow>=10.3,<13", "numpy>=1.26,<3", "mcp>=1.30,<2", "jsonschema>=4.20,<5", "pywin32>=306; sys_platform == 'win32'"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python :: 3",

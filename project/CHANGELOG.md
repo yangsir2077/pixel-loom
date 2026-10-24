@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.19 — 2026-10-24: optional normal maps and lighting
+
+- Add an optional local normal-map/lighting workbench and `pixel_material` MCP parity: PNG/sheet import, flat/silhouette/explicit-height sources, direction brush, flat-versus-normal comparison, light/ambient/specular controls, emission layers in original order and per-frame maps.
+- Keep preview drafts separate from color cels and palette. Apply/clear use shared undo and portable optional project metadata; stale bindings, oversized maps, unknown fields and cross-document previews fail safely. Preserve an open GUI draft against cache eviction and project switches. Existing color review/export semantics remain intact; material outputs are explicitly preview artifacts.
+- Export effective normal/render PNGs or aligned material/render atlases with source timings, metadata and relative Godot CanvasTexture. Add NumPy to the local runtime and packaging notices; no game engine or model API is required for app previews.
+- Put supplied-image pixelization first in MCP discovery, the legacy reference prompt and the command palette. Keep artistic redraw as an explicit optional scope and retain existing API identifiers. Remove the conversion UI's small fixed-size shortcuts and inert style-category selector; dimensions/colors remain freely editable, legacy style metadata and optional style references remain supported.
+- Clarify source/material limits, independent glass/emission/glow work and optional technical normal-map authoring. Silhouette/height estimates stay labeled after local brush edits; they are not semantic 3D reconstruction. Interactive CPU preview performance depends on canvas/layer count.
+- Reuse the existing task routes and bundled guides for static identity baselines, adaptive source/detail parameters, key-pose-first local motion, timing, seam inspection and repeated-defect structural diagnosis. No new content presets, automatic generation/cleanup, hidden filling or animation authorization.
+- Remove fixed canvas/frame suggestions from the draw/animation prompt defaults while retaining explicit arguments and all native tools, project history, review and export behavior. Keep detailed steps in on-demand guides instead of a second prompt/checklist pipeline.
+- Validate explicit emission layer ids, retain upper-layer occlusion and bake emission strength into exported emission maps. Original color atlases remain unchanged; engine integration must avoid counting emission twice.
+- Synchronize the offline operation schema and NumPy dependency lists. Preserve existing project/tab/history, original color review gates and export formats; material exports remain explicitly labeled previews.
+
 ## 0.7.18 — 2026-10-23: browser-style project tabs
 
 - Close a project tab from the × on the tab or from its right-click menu (close this tab / tabs to the left / tabs to the right / other tabs). Closing only hides the tab: the `.pixloom` file, project number, id and saved versions are untouched, and the project does not enter the removed list.

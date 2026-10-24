@@ -4,7 +4,7 @@
 
 面向 AI 的像素创作工具，以及供用户查看、创作和修改作品的可视化编辑器。配套说明帮助 AI 使用通用绘图与动画工具；用户直观看到产物、手动修细节，并使用导入、保存、导出和版本记录。支持 MCP 的 AI 客户端通过标准 **MCP / stdio** 直接调用原生工具。免费开源，采用 [MIT](LICENSE) 许可。
 
-**0.7.18 公开测试版。** 新增标签关闭、批量收起、重新打开和相应 MCP 操作，关闭当前项目时保存修改；工程、编号和版本历史保留。补强异常文件跳转，并新增贡献者名单。原有绘画、图层、动画、按需抠图、创作协作及引擎导出功能保留。Windows 桌面端经过本机测试。
+**0.7.19 公开测试版。** 新增可选法线与光照预览、方向笔刷、发光层、逐帧材质和贴图导出，界面及 MCP 共用同一模型与撤销。普通图转像素不自动添加材质；原有绘画、图层、动画、按需抠图、创作协作、项目历史及引擎导出保留。Windows 桌面端经过本机测试。
 
 源码位于仓库的 `project/` 目录；本文也随便携版放在 `app/` 中。**源码命令必须在含 `pyproject.toml` 的目录执行**，便携版启动则从解压后的 `PixelLoom` 根目录开始。`tests/` 是保留给开源维护的正式测试；临时工程、日志和构建缓存不随交付分发。
 
@@ -12,7 +12,7 @@
 
 ### 方式一：下载 Windows 便携版（推荐）
 
-1. 打开 [GitHub Releases](https://github.com/yangsir2077/pixel-loom/releases)，在 **Assets（资源）** 下载 `pixel-loom-<版本>-windows-x64.zip`。当前[直接下载 0.7.18 Windows 便携版](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.18/pixel-loom-0.7.18-windows-x64.zip)。
+1. 打开 [GitHub Releases](https://github.com/yangsir2077/pixel-loom/releases)，在 **Assets（资源）** 下载 `pixel-loom-<版本>-windows-x64.zip`。当前[直接下载 0.7.19 Windows 便携版](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.19/pixel-loom-0.7.19-windows-x64.zip)。
 2. 解压**整个** `PixelLoom` 文件夹，双击根目录的 `打开像素织机.cmd`，或打开 `app/PixelLoom.exe`。保留完整 `app` 文件夹，包含 `PixelLoomMCP.exe` 和 `_internal`；只拷贝一个 exe 不能运行。
 3. 便携版内置 Python 运行库，不需要另装 Python。
 
@@ -47,7 +47,7 @@ Windows 也可以在 `project` 目录运行 `setup.ps1`，再双击同目录的 
 
 ## 1. 给 AI：接手后立即这样做
 
-0.7.12 将制作方法随 MCP 提供，不需要使用者额外发文档。`pixel_onboard.creation_workflow.read_next` 指向 `pixel_help(topic="workflow")`；动画再读 `animation_workflow`，交付前读 `inspection_workflow`。内容包括造型与分层、可选的客户端坐标计算、避免残影、看全帧与实际时序、修复重查及诚实验收；不提供写死成品。也可读取 `pixel-loom://workflow` 资源。AI 客户端需要能调用工具并查看图片；说明不保证所有模型达到相同美术质量。
+制作方法随 MCP 提供，不需要使用者额外发文档。`pixel_onboard.creation_workflow.read_next` 指向 `pixel_help(topic="workflow")`；动画再读 `animation_workflow`，交付前读 `inspection_workflow`。先检查静态身份基准与可编辑分层，动画按需先验证关键姿势再做过渡，检查全帧、真实时序和连接；同一缺陷反复出现则调整结构策略。尺寸、色数和帧数按任务与原图决定，不提供写死成品。也可读取 `pixel-loom://workflow` 资源。AI 客户端需要能调用工具并查看图片；说明不保证所有模型达到相同美术质量。
 
 1. 找到名称以 `pixel_onboard` 结尾的 MCP 工具并调用 `{}`。客户端可能添加前缀，不要写死完整前缀。
 2. 读取 `current_document` 中的 `document_id`、`revision`、尺寸、图层、帧、保存路径、反馈和自检状态；再看实际图片。不要假定是空工程。
@@ -193,6 +193,10 @@ Pixel Loom 不会自动修改你的客户端配置。向 Claude Desktop 拖入�
 ### 动画
 
 从静态项目 `fork`。先明确帧数、真实帧时长、固定点、可动部分和动作节奏，再改图层和帧。每帧从可靠基准构造，避免累积变形与旧像素残留。用全帧表逐帧检查，重点放大衣摆、手脸、脚、枝梢等连接处；检查首尾循环。预览倍速不改变原始帧时长或导出速度。
+
+### 可选材质与光照（0.7.19）
+
+“更多 → 法线与光照预览”支持法线 PNG／图集导入、方向笔刷、轮廓或高度图估算、拖动光源、反光及独立发光层。预览不改变颜色像素和调色板，应用后可撤销、保存和保留历史；可导出渲染 PNG、动画光照图集或引擎贴图 ZIP。MCP 从 `pixel_help(topic="material_workflow")` 按需发现 `pixel_material`，不插入默认图转像素流程。法线不是自动 3D 重建，已有固定反光不会被消除，原画审查也不等于渲染验收。详见[使用手册](docs/USER_GUIDE.md)。
 
 ### 完成前必须做
 

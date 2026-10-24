@@ -15,6 +15,7 @@ TOPICS = {
     "inspection_workflow": ("INSPECTION_WORKFLOW.md", "Visual evidence, repairs and delivery"),
     'export':('EXPORT_GUIDE.md','Native/Aseprite sheets and Godot 4 SpriteFrames'),
     'art_direction':('ART_DIRECTION.md','Whole/detail coordination and optional host-generation handoff'),
+    'material_workflow':('MATERIAL_WORKFLOW.md','Optional normal editing, local lighting and material previews'),
 }
 RELATED = {
     'workflow': ('text_workflow', 'image_workflow', 'art_direction'),
@@ -25,7 +26,8 @@ RELATED = {
     'animation_workflow': ('decomposition_workflow', 'inspection_workflow', 'export'),
     'inspection_workflow': ('export',),
     'export': ('inspection_workflow',),
-    'art_direction': ('text_workflow', 'image_workflow', 'decomposition_workflow', 'inspection_workflow'),
+    'art_direction': ('image_workflow', 'material_workflow', 'inspection_workflow'),
+    'material_workflow': ('art_direction','inspection_workflow','export'),
 }
 
 
@@ -46,11 +48,11 @@ def workflow_entry(task=None):
         "stages": [
             "Read current art and the human's task; preserve existing projects.",
             "Select static text/image, local edit, requested completion or requested animation from the human's task.",
-            "Static first; create clean editable object layers; do not infer hidden painting or animation permission.",
+            "Static first; check an identity baseline and editable object layers; choose dimensions/colors for the source, not a fixed recipe.",
             "Keep bounded pixel_task progress; read only the relevant guide and changed evidence.",
             "Draw native operations in coherent batches and inspect actual previews.",
-            "Compute task-specific motion if useful; rebuild clean moving cels rather than accumulating old pixels.",
-            "Inspect all frames, local details, actual timing and loop seams; repair and obtain new evidence.",
+            "Only requested animation: check key poses, then transitions/timing; build clean local motion from the retained baseline.",
+            "Inspect frames/details/timing/seams; repeated defects need structural diagnosis and fresh evidence, not repeated patches.",
             "Submit specific visual findings, save the editable project and verify final exports.",
         ],
         "capabilities": {

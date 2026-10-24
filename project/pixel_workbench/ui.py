@@ -337,6 +337,7 @@ class DesktopUI:
                            relief="flat",font=SMALL,padx=10,pady=6)
         more_menu=tk.Menu(more,tearoff=False,bg=FIELD,fg=FG)
         for text,callback in [("检查成品",self.quality_dialog),("动画总览",self.overview_dialog),
+                              ("法线与光照预览",self.material_dialog),
                               ("存储管理",self.storage_dialog),
                               ("AI 工作流与进度",self.workflow_dialog),
                               ("检查更新",self.show_updates),
@@ -870,6 +871,15 @@ class DesktopUI:
         self.reference_window = ReferenceDialog(self)
         return self.reference_window
 
+    def material_dialog(self):
+        from .material_ui import MaterialDialog
+        existing=getattr(self,'material_window',None)
+        if existing and existing.dialog.winfo_exists():
+            existing.dialog.lift()
+            return existing
+        self.material_window=MaterialDialog(self)
+        return self.material_window
+
     def character_dialog(self):
         from .character_ui import CharacterDialog
         existing = getattr(self, "character_window", None)
@@ -1254,7 +1264,8 @@ class DesktopUI:
                      ("角色与动作 · 造型规范 / 逐帧检查",self.character_dialog),
 
                      ("成品自检 · 证据 / 循环播放 / AI结论",self.quality_dialog),
-                     ("图片转像素 · 参考图 / MCP 重绘", self.reference_dialog),
+                     ("图片像素化 · 预览 / 可编辑底稿", self.reference_dialog),
+                     ("法线与光照 · 可选材质预览", self.material_dialog),
                      ("导出素材", self.export_dialog), ("调整画布", self.resize_dialog), ("多帧总览", self.overview_dialog),
                      ("自动化 · 起伏循环", lambda: self.automation_dialog("float")),
                      ("自动化 · 往返位移", lambda: self.automation_dialog("travel")),

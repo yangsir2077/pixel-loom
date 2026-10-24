@@ -6,7 +6,7 @@
 
 An AI-facing pixel-art tool with documented general drawing/animation operations and a visual editor for humans to inspect results, create artwork, fix small defects and import/save/export. Standard MCP clients and the desktop share editable layers, cels, palette, named regions, project iterations and undo history. Content is planned by the user's own AI.
 
-**0.7.18 public preview.** Close, batch-hide and reopen project tabs without removing their files, identities or history. Closing the active tab saves edits before switching; MCP supports the same actions and an explicit surviving tab. Missing/corrupt neighbours are skipped, and contributor acknowledgments are included. Existing drawing, animation, optional cutout, art coordination, review and engine export remain available. Windows desktop is tested locally; source is MIT licensed and older releases retain separate assets.
+**0.7.19 public preview.** Optional normal maps and local lighting add direction painting, emission layers, aligned per-frame maps and material exports through the desktop and `pixel_material` MCP tool. Preview does not change original pixels or the palette; applied settings share undo/history and portable project saving. Image conversion does not automatically add materials. Existing drawing, animation, cutout, art coordination, project tabs, review and engine exports remain available. Windows desktop is tested locally; source is MIT licensed and older releases retain separate assets.
 
 Source code lives in `project/`; this guide is also bundled in the portable `app/` folder. Run source commands in the directory containing `pyproject.toml`. Portable instructions start at the extracted `PixelLoom` root. Formal tests remain in `tests/`; generated test projects, logs and build caches are excluded.
 
@@ -35,7 +35,7 @@ Alternatively, run `setup.ps1` in `project/`, then its launcher or `launch.ps1`.
 
 ## Connect MCP
 
-Creation methods are bundled with MCP. Follow `pixel_onboard.creation_workflow.read_next` to `pixel_help(topic="workflow")`, then `animation_workflow` for motion and `inspection_workflow` before delivery. The optional `pixel-loom://workflow` resource exposes the same guides. They teach design, clean layers/cels, optional host-side calculations, actual image inspection and repair/review, without finished-art generators or extra user documents. The host needs image-viewing capability; instructions do not guarantee equivalent artistic quality across models.
+Creation methods are bundled with MCP. Follow `pixel_onboard.creation_workflow.read_next` to `pixel_help(topic="workflow")`, then `animation_workflow` for motion and `inspection_workflow` before delivery. The optional `pixel-loom://workflow` resource exposes the same guides. Establish a checked static identity baseline and clean editable layers; requested animation checks key poses before transitions, timing and seams. Repeated defects call for structural diagnosis. Dimensions, palette and frame counts follow the task/source, not fixed recipes. The host needs image-viewing capability; instructions do not guarantee equivalent artistic quality across models.
 
 The local service starts with the editor; there is no GUI activation step. For first-time host registration, generate a configuration with `pixel-loom-config --format both`, or use More → MCP setup. By default this prints/copies a configuration without modifying other applications. Explicit `--install codex` or `--install claude-desktop` creates a backup and preserves other settings.
 

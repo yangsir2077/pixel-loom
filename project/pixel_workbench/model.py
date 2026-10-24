@@ -28,6 +28,7 @@ PALETTE = [
     "#543e7aff", "#8864b1ff", "#c29cd1ff", "#f1c4deff",
 ]
 MAX_PIXELS = 8_388_608
+MAX_PROJECT_BYTES = 100_000_000
 
 
 class PixelError(ValueError):
@@ -79,6 +80,8 @@ def atomic_json(path, data):
             json.dump(data, handle, ensure_ascii=False, separators=(",", ":"))
             handle.flush()
             os.fsync(handle.fileno())
+        if isinstance(data,dict) and data.get('format')=='pixel-loom/v1' and temporary.stat().st_size>MAX_PROJECT_BYTES:
+            raise PixelError('Project exceeds the 100 MB portable-file limit; export large material maps separately before saving.',code='PROJECT_TOO_LARGE')
         os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -114,6 +117,7 @@ class Document:
         self.selection = None
         self.reference = None
         self.character = None
+        self.material = None
         self.effect_recipe = None
         self.quality_policy = None
         self.quality_reviews = []
@@ -187,6 +191,8 @@ class Document:
             data["reference"] = copy.deepcopy(self.reference)
         if self.character is not None:
             data["character_profile"] = copy.deepcopy(self.character)
+        if self.material is not None:
+            data["material"] = copy.deepcopy(self.material)
         if self.effect_recipe is not None:
             data["effect_recipe"] = copy.deepcopy(self.effect_recipe)
         if self.quality_policy is not None:
@@ -264,6 +270,9 @@ class Document:
         if data.get("character_profile") is not None:
             from .character import validate_profile
             doc.character = validate_profile(data["character_profile"], doc.width, doc.height)
+        if data.get('material') is not None:
+            from .materials import validate_material
+            doc.material = validate_material(data['material'])
         if data.get("effect_recipe") is not None:
             value = data["effect_recipe"]
             if not isinstance(value, dict) or set(value) != {"format", "settings"} or value["format"] != "pixel-loom/effect/v1" or not isinstance(value["settings"], dict):
@@ -286,7 +295,7 @@ class Document:
 
     @classmethod
     def open(cls, path):
-        if Path(path).stat().st_size > 100_000_000:
+        if Path(path).stat().st_size > MAX_PROJECT_BYTES:
             raise PixelError("Project file is too large")
         with Path(path).open(encoding="utf-8-sig") as handle:
             return cls.from_dict(json.load(handle))
@@ -309,7 +318,7 @@ class Document:
         # Feedback is a human conversation, not paint history. Undo/redo must
         # never delete a report or restore an old answer from a drawing snapshot.
         for key in ("id", "name", "width", "height", "palette", "strict_palette", "durations",
-                    "layers", "active_layer", "active_frame", "regions", "stamps", "tags", "selection", "reference", "character", "effect_recipe", "quality_policy", "quality_reviews"):
+                    "layers", "active_layer", "active_frame", "regions", "stamps", "tags", "selection", "reference", "character", "material", "effect_recipe", "quality_policy", "quality_reviews"):
             setattr(self, key, getattr(other, key))
 
     def _event(self, label, source, count):
@@ -740,6 +749,12 @@ class Document:
         if kind == "reference_context":
             from .reference import validate_context
             self.reference = validate_context(op["data"])
+            return
+        if kind == 'material_context':
+            from .materials import validate_material
+            self.material = validate_material(op['data'])
+            if self.material is not None and len(json.dumps(self.to_dict(),ensure_ascii=False,separators=(',',':')).encode())>MAX_PROJECT_BYTES:
+                raise PixelError('Embedded material would exceed the portable project limit; export maps as a bundle instead.',code='PROJECT_TOO_LARGE')
             return
         if kind == "character_profile":
             from .character import validate_profile

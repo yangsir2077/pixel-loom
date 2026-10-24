@@ -56,6 +56,8 @@ class DocumentService:
         self.quality = QualityManager(self.runtime)
         from .motion import MotionManager
         self.motion = MotionManager()
+        from .materials import MaterialManager
+        self.materials = MaterialManager()
         self.feedback = FeedbackManager()
         self.projects = ProjectLibrary(self.runtime, self.workspace)
         from .storage import StorageManager
@@ -78,6 +80,7 @@ class DocumentService:
                 "app_version": __version__, "project_path": str(self.path) if self.path else None,
                 "unsaved_changes": self.dirty, "editor": {"mode": self.mode, **self.view},
                 "workspace": str(self.workspace), "reference_workflow": reference,
+                "material": self.materials.status(self.doc),
                 "quality_review": self.quality.summary(self.doc), "feedback": feedback_summary(self.doc),
                 "project_library": {"count":len(self.projects.scoped('open'))+len(self.projects.scoped('closed')),
                     "open_count":len(self.projects.scoped('open')),
@@ -636,6 +639,11 @@ class DocumentService:
             if action=='plan':return self.storage.plan(payload.get('settings'),payload.get('plan_id'),payload.get('page',0),payload.get('limit',20)),JSON_TYPE
             if action=='apply':return self.storage.apply(payload),JSON_TYPE
             raise PixelError('Unknown storage action')
+        if path == '/material':
+            return self.materials.action(self,payload),JSON_TYPE
+        if path == '/material/present':
+            self.materials.ticket(self.doc,payload.get('preview_id'))
+            return {'ok':True,'presented':False,'reason':'Headless backend: inspect the returned material images.'},JSON_TYPE
         if path == "/character":
             from .character import action
             return action(self, payload), JSON_TYPE

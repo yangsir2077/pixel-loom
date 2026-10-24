@@ -11,6 +11,7 @@ python -m tests.mcp_tag_quality_smoke
 python -m tests.mcp_export_formats_smoke
 python -m tests.mcp_creation_smoke
 python -m tests.mcp_task_smoke
+python -m tests.mcp_material_smoke
 python -m tests.mcp_reference_smoke
 python -m tests.mcp_cutout_smoke
 python -m tests.mcp_quality_smoke
@@ -19,6 +20,7 @@ python -m tests.mcp_projects_smoke
 python -m tests.mcp_storage_smoke
 python -m tests.mcp_character_smoke
 python -m tests.gui_smoke
+python -m tests.gui_material_smoke
 python -m tests.gui_tag_quality_smoke
 python -m tests.gui_export_formats_smoke
 python -m tests.gui_editing_smoke

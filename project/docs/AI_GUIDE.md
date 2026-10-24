@@ -12,13 +12,16 @@ New MCP sessions receive workflow discovery in initialization instructions and `
 - `text_workflow` / `image_workflow`: static native creation or faithful conversion, both with meaningful editable visible-object layers. Retain background separately unless removal is requested.
 - `decomposition_workflow`: inspect structure/occlusion/ownership; separate clean visible parts and view isolated layers plus composite. Pixel equality does not prove semantic separation. Hidden=unfilled is valid static extraction.
 - `completion_workflow`: only requested layers, matching original palette ramps, resolution, light/shadow transitions and detail density. Animation alone does not authorize hidden painting.
-- `pixel_help(topic="animation_workflow")`: fixed/moving parts, anchors, timing/phase, clean cels, optional host-side geometry/constraint calculations, residue prevention and all-frame inspection.
-- `pixel_help(topic="inspection_workflow")`: actual frame/detail/timing/seam images, diagnostic paging, repairs with fresh evidence, honest pass/fail/uncertain findings and scoped final export.
+- `pixel_help(topic="animation_workflow")`: checked static identity baseline, fixed/moving parts and coupled joints, key poses before transitions, action-specific spacing/timing, clean cels and all-frame inspection. Optional host geometry helps with constraints; no fixed frame/key-pose count or uniform-speed rule.
+- `pixel_help(topic="inspection_workflow")`: actual frame/detail/timing/seam images, repeated-defect structural diagnosis, repairs with fresh evidence, honest pass/fail/uncertain findings and scoped final export.
 - Optional `pixel_help(topic="art_direction")`: shared art direction in pixel_task; pixel_art_board for whole/detail/reference evidence; pixel_generation for a human-chosen host-generation handoff and preserved candidate conversion. The server does not generate images, call a model or guarantee equal artistic quality.
+- Optional `pixel_help(topic="material_workflow")`: `pixel_material` imports/edits normals, previews identical lighting with flat/actual normals, applies with shared undo and exports preview/map bundles. Keep this outside default conversion; estimates are not semantic 3D reconstruction and color-review passes do not certify rendered lighting.
 
 Use those optional steps only when useful: a regional board already includes the whole image, so do not request a second whole preview of identical evidence. Generation previews can reuse a viewed source_sha256 via if_source_sha256 when the backend advertises conditional_generation_source; only the unchanged original is omitted, never the new candidate. Existing isolated-layer checks and final review remain required.
 
 These read-only calls do not start or edit a document and do not require a local README or another file from the human. Clients supporting resources may instead read `pixel-loom://workflow`. Existing drawing, animation and finish prompts also point to the relevant methods. The full guides are packaged resources, including in the portable executable.
+
+Keep one workflow, not a second prompt pipeline: the shared workflow guide defines source/static identity and adaptive dimensions/palette; animation and inspection explain only their extra steps. A suitable original does not need automatic concept regeneration. Do not automatically erase isolated pixels or repaint a faithful conversion; requested cleanup is a scoped edit. Key-pose counts, frame counts and seam-repair areas follow the action, not universal numeric recipes. The draw/animation MCP prompts default to auto while preserving explicit size/frame_count arguments. Execute tools directly unless the human specifically asks for copyable prompts; retain short progress/cause notes in the existing pixel_task.
 
 `pixel_preview(layers=[observed_layer_id])` shows an isolated layer, even when hidden. A list shows a selected group in original order/opacity. It never changes live visibility, active cel, history or artwork; omit `layers` for the normal visible composite. Use normal-size and enlarged images for the decomposition checks. The editor does not automatically infer anatomy or perform semantic segmentation; these are explicit instructions for the connected AI's visual analysis.
 
@@ -37,6 +40,7 @@ Use compact=True for onboard/status/edit/validate/projects and project/feedback/
 | `pixel_onboard` | First-use guide, current project and a working example |
 | `pixel_task` | Bounded local task brief, scope, part checks and next action without changing artwork/history |
 | `pixel_art_board` | Read-only whole/detail/reference comparison from optional direction notes; unchanged image reuse |
+| `pixel_material` | Optional normal import/brush/generation, local 2D lighting preview, apply/clear and PNG/ZIP export without repainting color cels |
 | `pixel_generation` | Host prompt handoff, local original/draft preview, apply chosen candidate as a preserved new project |
 | `pixel_projects` | Numbered retained works, fork/new/switch, saved versions, non-destructive restore, tab close/reopen and paired frame evidence |
 | `pixel_help` | Focused operation schemas/examples or an operation catalog |

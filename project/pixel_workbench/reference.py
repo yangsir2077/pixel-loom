@@ -158,7 +158,7 @@ def validate_context(context):
 
 def adjusted_subject(context):
     if not context["subject"]:
-        raise PixelError("先导入要重绘的普通图片", code="REFERENCE_REQUIRED")
+        raise PixelError("先导入要像素化的普通图片", code="REFERENCE_REQUIRED")
     if context.get("cutout") is not None:
         from .cutout import cutout_subject
         image = cutout_subject(context["subject"], context["cutout"])
@@ -315,7 +315,7 @@ class ReferenceWorkspace:
                 "style_reference_notice": "No built-in style images. Styles are imported by the user/client or embedded in a project. Replace/clear with pixel_reference_setup(role='style'). Loading a different subject clears the previous style. A style image does not change automatic draft pixels or authorize artistic redraw.",
                 "current_project_has_same_subject": bound,
                 "canvas_matches_target": bool(doc and (doc.width, doc.height) == (settings["width"], settings["height"])),
-                "workflow": "pixel_reference -> pixel_reference_setup -> pixel_redraw_begin(mode='draft') -> inspect -> save/export. Artistic redraw requires an explicit human request.",
+                "workflow": "pixel_reference -> pixel_reference_setup (preview/adjust) -> pixel_redraw_begin(mode='draft') -> image_workflow visible layers -> inspect -> save/export. Later local edits/animation follow the human's task; artistic redraw is optional and explicit.",
                 "draft_notice": "DEFAULT: faithful automatic draft (resampling/quantization), then clean visible-object layers during creation/conversion; preserve composite/palette/size. Read image_workflow. No hidden painting, redesign or animation unless the human requests it. Merely importing/opening starts no creation task. Prepared settings and references are not authorization; mode='redraw' is opt-in.",
                 "reference_coordinates": "Crop uses stored reference pixels, [x,y,width,height]; stored sides are at most 1024 after EXIF orientation.",
                 "cutout": {"applied": context.get("cutout") is not None, "settings": deepcopy(context.get("cutout")),

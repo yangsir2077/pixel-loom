@@ -157,6 +157,8 @@ op("reference_context", "reference", "Set portable reference context as one undo
    ("data",), {"data": {"type": "object"}}, {"op": "reference_context", "data": {}})
 op("quality_policy", "quality", "Set acceptance requirements as undoable metadata. Prefer pixel_review_settings for typed fields; changing requirements invalidates earlier reviews.",
    ("data",), {"data": {"type": "object"}}, {"op": "quality_policy", "data": {}})
+op("material_context", "material", "Set/clear optional portable normal maps and lighting settings as one undoable metadata edit. Prefer pixel_material preview/apply; original color cels are unchanged.",
+   ("data",), {"data": {"anyOf": [{"type": "object"}, {"type": "null"}]}}, {"op": "material_context", "data": None})
 op("character_profile", "character", "Set/clear portable approved character metadata in one undo step. Prefer pixel_character for validated capture, references and import/export.",
    ("data",), {"data": {"anyOf": [{"type": "object"}, {"type": "null"}]}}, {"op": "character_profile", "data": None})
 
@@ -245,7 +247,7 @@ EditOperation = operation_type()
 
 # Thin discovery schema, full authoritative schemas remain in guide/full_schema.
 # Existing payloads are unchanged; Document.apply/validate still checks EVERY op
-# with SPECS before committing anything. Avoid repeating 43 full schemas in each tool.
+# with SPECS before committing anything. Avoid repeating every full schema in each tool.
 NativeOperation = Annotated[dict[str, Any], Field(json_schema_extra={
     "properties":{"op":{"type":"string","enum":list(SPECS)}},"required":["op"],
     "description":"Native op object. Read pixel_help(operation='<op>') for its exact fields; all fields are validated atomically by the editor."})]

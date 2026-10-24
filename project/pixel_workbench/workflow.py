@@ -34,7 +34,7 @@ def capabilities():
     return {'api_revision':API_REVISION,'workflow_revision':WORKFLOW_REVISION,
             'features':['task_context','compact_reads','conditional_preview','isolated_preview','polygon_copy','review_settings_modes',
                         'tag_review','combined_review_export','engine_export_formats','art_direction','generation_handoff','generation_handoff_v2',
-                        'conditional_generation_source'],
+                        'conditional_generation_source','material_lighting'],
             'sheet_formats':['native','aseprite_hash','aseprite_array','godot']}
 
 def route(task=None):
@@ -64,6 +64,8 @@ def compact_state(state):
         if frames and 0<=index<len(frames):result['active_duration_ms']=frames[index]['duration_ms']
     if 'quality_review' in state:
         result['quality_review']={k:deepcopy(v) for k,v in state['quality_review'].items() if k in ('status','next_action','pending_issue_ids')}
+    if 'material' in state:
+        result['material']={k:deepcopy(v) for k,v in state['material'].items() if k in ('configured','normal_frames','normal_origin','warnings','help')}
     if 'reference_workflow' in state:
         ref=state['reference_workflow']
         result['reference_revision']=ref.get('reference_revision')

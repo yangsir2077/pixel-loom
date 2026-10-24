@@ -2151,6 +2151,30 @@
       "additionalProperties": false,
       "properties": {
         "op": {
+          "const": "material_context",
+          "type": "string"
+        },
+        "data": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "data"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "op": {
           "const": "character_profile",
           "type": "string"
         },

@@ -89,17 +89,30 @@ async def run(server_executable=None, artifacts=None):
                 for name, arguments in [("draw_sprite", {"brief": "abstract fixture"}),
                                         ("animate_sprite", {"action": "abstract fixture"}),
                                         ("finish_and_review", {})]:
-                    assert (await first.get_prompt(name, arguments)).messages
+                    prompt = await first.get_prompt(name, arguments)
+                    assert prompt.messages
+                    text = '\n'.join(m.content.text for m in prompt.messages)
+                    if name in ('draw_sprite', 'animate_sprite'):
+                        assert 'choice: auto' in text
+                # Prompt arguments remain usable; auto discovery must not
+                # silently overwrite the human's explicit dimensions/count.
+                for name, arguments, chosen in [
+                    ('draw_sprite', {'brief':'abstract fixture','size':'73x41'}, 'Canvas choice: 73x41'),
+                    ('animate_sprite', {'action':'abstract fixture','frame_count':'11'}, 'Frame-count choice: 11')]:
+                    prompt = await first.get_prompt(name, arguments)
+                    assert chosen in '\n'.join(m.content.text for m in prompt.messages)
                 before = guide["current_document"]
                 # Guide requests are read-only and require no local README.
                 unchanged = data(await first.call_tool("pixel_status", {}))
                 assert unchanged["document_id"] == before["document_id"] and unchanged["revision"] == before["revision"]
                 state = data(await first.call_tool("pixel_projects", {
-                    "action": "new", "name": "Workflow protocol fixture", "width": 16, "height": 16, **tokens(unchanged)}))
+                    "action": "new", "name": "Workflow protocol fixture", "width": 19, "height": 23, **tokens(unchanged)}))
                 base = state["layers"][0]["id"]
+                positions = [8, 10, 12, 11, 9]
+                durations = [70, 100, 140, 100, 90]
                 state = data(await first.call_tool("pixel_review_settings", {
-                    "settings": {"expected_width": 16, "expected_height": 16, "expected_frames": 4,
-                                 "transparent_background": True, "uniform_timing": True,
+                    "settings": {"expected_width": 19, "expected_height": 23, "expected_frames": len(positions),
+                                 "transparent_background": True, "uniform_timing": False,
                                  "fixed_regions": ["fixed"], "detail_regions": ["moving"],
                                  "brief": "Abstract fixed/moving fixture, never shipped as a content preset"},
                     **tokens(state)}))
@@ -108,23 +121,34 @@ async def run(server_executable=None, artifacts=None):
                     {"op": "layer_add", "id": "motion", "name": "moving"},
                     {"op": "region_define", "name": "fixed", "rect": [2, 2, 4, 4]},
                     {"op": "region_define", "name": "moving", "rect": [7, 8, 9, 8]},
-                    {"op": "frame_set", "frame": 0, "duration_ms": 80},
+                    {"op": "frame_set", "frame": 0, "duration_ms": durations[0]},
                 ]
-                for f in range(1, 4):
-                    ops.append({"op": "frame_add", "after": f-1, "copy_from": 0, "duration_ms": 80})
-                # Only now draw motion; copied moving cels were empty.
-                for f, x in enumerate([8, 10, 12, 10]):
+                for f in range(1, len(positions)):
+                    ops.append({"op": "frame_add", "after": f-1, "copy_from": 0, "duration_ms": durations[f]})
+                # Check key poses before filling the in-between cels. This
+                # abstract fixture tests tools/timing, not artistic judgment.
+                for f in (0, 2, 4):
                     ops.append({"op": "rect", "layer": "motion", "frame": f,
-                                "x": x, "y": 9, "width": 2, "height": 2, "color": 7})
-                ops.append({"op": "pixel", "layer": "motion", "frame": 2, "x": 15, "y": 15, "color": 7})
+                                "x": positions[f], "y": 9, "width": 2, "height": 2, "color": 7})
                 for operation in ["rect", "frame_add", "clear"]:
                     assert data(await first.call_tool("pixel_help", {"operation": operation}))["schema"]
                 dry = await first.call_tool("pixel_validate", {"ops": ops, **tokens(state)})
                 assert data(dry)["dry_run"]
                 assert data(await first.call_tool("pixel_status", {}))["revision"] == state["revision"]
                 state = data(await first.call_tool("pixel_edit", {"ops": ops, "include_preview": False,
-                            "label": "Protocol fixture with deliberate residual pixel", **tokens(state)}))
-                for f, x in enumerate([8, 10, 12, 10]):
+                            "label": "Protocol key poses from a fixed baseline", **tokens(state)}))
+                keys = await first.call_tool('pixel_contact_sheet', {'frames':[0,2,4], 'scale':2})
+                assert picture(keys).width > 0
+                for f in (0,2,4):
+                    image = picture(await first.call_tool('pixel_preview', {'frame':f,'scale':1,'checker':False}))
+                    assert image.getpixel((positions[f],9))[3] == 255
+                transitions = [{"op":"rect","layer":"motion","frame":f,"x":positions[f],"y":9,
+                                "width":2,"height":2,"color":7} for f in (1,3)]
+                transitions.append({"op": "pixel", "layer": "motion", "frame": 2, "x": 15, "y": 15, "color": 7})
+                state = data(await first.call_tool('pixel_edit', {'ops':transitions,'include_preview':False,
+                            'label':'Protocol transitions with deliberate residual pixel',**tokens(state)}))
+                assert [frame['duration_ms'] for frame in state['frames']] == durations
+                for f, x in enumerate(positions):
                     image = picture(await first.call_tool("pixel_preview", {"frame": f, "scale": 1, "checker": False}))
                     assert image.getpixel((2, 2))[3] == 255
                     assert image.getpixel((x, 9))[3] == 255
@@ -167,6 +191,14 @@ async def run(server_executable=None, artifacts=None):
                 for kind, filename in [("png", "workflow.png"), ("gif", "workflow.gif"), ("sheet", "workflow-sheet.png")]:
                     exported = data(await first.call_tool("pixel_export", {"path": "exports/" + filename, "kind": kind}))
                     assert exported["delivery_status"] == "reviewed_final" and Path(exported["path"]).is_file()
+                with Image.open(workspace/'exports/workflow.gif') as image:
+                    assert image.n_frames == len(positions)
+                    actual = []
+                    for f in range(image.n_frames):
+                        image.seek(f);actual.append(image.info['duration'])
+                    assert actual == durations
+                sheet = json.loads((workspace/'exports/workflow-sheet.json').read_text(encoding='utf-8'))
+                assert [frame['duration_ms'] for frame in sheet['frames']] == durations
                 # A second fresh standard MCP session also discovers guidance, without local files.
                 second = await connect()
                 second_entry = data(await second.call_tool("pixel_onboard", {}))["creation_workflow"]["read_next"]
@@ -180,9 +212,9 @@ async def run(server_executable=None, artifacts=None):
                 summary = {"ok": True, "version": __version__, "fresh_clients": 2, "guidance_topics": len(full),
                            "scope": "Protocol/discovery fixture, not an external AI model benchmark",
                            "checks": ["initialize discovery", "onboard-directed help", "bundled resource without local docs",
-                                      "existing prompts", "read-only help", "native clean-frame drawing", "dry-run",
+                                      "adaptive prompts and explicit overrides", "read-only help", "checked key poses before transitions", "dry-run",
                                       "actual PNG decoding", "all motion pages", "review gate", "failed verdict",
-                                      "bounded repair", "stale evidence rejected", "fresh review", "save and final exports",
+                                      "bounded repair", "stale evidence rejected", "fresh review", "variable-duration GIF/sheet export",
                                       "second fresh session"]}
                 print(json.dumps(summary, indent=2))
                 return summary

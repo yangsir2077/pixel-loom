@@ -300,7 +300,8 @@ class Editor(DesktopUI):
             self.service.path = self.path
             self.service.saved_fingerprint = self.saved_fingerprint
             self.service.view = {"playing": self.playing, "playback_rate": self.playback_rate,
-                                 "gesture_active": bool(self.gesture or self.path_points)}
+                                 "gesture_active": bool(self.gesture or self.path_points or
+                                     getattr(getattr(self,'material_window',None),'brush',None))}
 
     def refresh(self):
         self.color_index = min(self.color_index, len(self.doc.palette) - 1)
@@ -1065,6 +1066,10 @@ class Editor(DesktopUI):
             self.changed("已重做")
 
     def can_replace(self):
+        material=getattr(self,'material_window',None)
+        if material and material.dialog.winfo_exists() and material.draft_changed:
+            messagebox.showinfo('材质预览尚未应用','请先在光照窗口应用当前调整，或点击“还原预览”，再切换工程。',parent=material.dialog)
+            material.dialog.lift();return False
         if self.dirty:
             answer = messagebox.askyesnocancel("保存当前作品", "当前作品有未保存的修改，要先保存吗？", parent=self.root)
             if answer is None:
@@ -1200,12 +1205,26 @@ class Editor(DesktopUI):
         self.selection_preview=None
         self.feedback_draft=self.feedback_focus=None
         if close_dialogs:
-            for name in ('quality_window','reference_window'):
+            for name in ('quality_window','reference_window','material_window'):
                 window=getattr(self,name,None)
                 if window and window.dialog.winfo_exists():window.dialog.destroy()
 
     def dispatch(self, method, path, query, payload):
         self.sync_service()
+        material=getattr(self,'material_window',None)
+        replacing=method=='POST' and (path in ('/new','/open','/import','/redraw/begin') or
+            path=='/generation' and payload.get('action')=='apply' or
+            path=='/projects' and payload.get('action') in ('new','fork','switch','restore','use_version','remove','close'))
+        if (replacing or method=='POST' and path=='/shutdown') and material and material.dialog.winfo_exists() and material.draft_changed:
+            raise PixelError('Apply or restore the pending material preview before switching projects.',code='MATERIAL_DRAFT_PENDING')
+        if method=='POST' and path=='/material' and payload.get('action') in ('apply','clear') and material and material.dialog.winfo_exists() and material.draft_changed and (
+            payload.get('action')=='clear' or payload.get('preview_id')!=material.pending):
+            raise PixelError('A different human material draft is pending; do not replace it.',code='MATERIAL_DRAFT_PENDING')
+        if method=='POST' and path=='/material/present':
+            self.service.materials.ticket(self.doc,payload.get('preview_id'))
+            self.root.deiconify()
+            self.root.lift()
+            return self.material_dialog().present(payload['preview_id']), 'application/json; charset=utf-8'
         if method == "POST" and path == "/activate":
             self.root.deiconify()
             self.root.lift()
@@ -1218,6 +1237,7 @@ class Editor(DesktopUI):
             window.dialog.lift()
             return {"ok":True,"presented":True,"playing":window.playing,"review_id":payload["review_id"]},"application/json; charset=utf-8"
         read_only_preview = path in ("/task", "/art/board", "/validate", "/reference/preview", "/reference/cutout/preview", "/review/evidence", "/motion/check") or (
+            path=='/material' and payload.get('action','status') in ('status','preview','export')) or (
             path=='/generation' and payload.get('action','request') in ('request','preview')) or (
             path == '/reference/cutout' and payload.get('action') == 'export') or (
             path == '/storage' and payload.get('action','status') in ('status','plan')) or (

@@ -25,7 +25,7 @@ Make coherent edits as a batch; each batch is one shared undo step. Supply the `
 
 Use `pixel_validate` when a larger edit is uncertain. It returns the proposed image without changing artwork or history. For a small clear pixel correction, direct editing is sufficient. Inspect actual preview images after meaningful visual changes.
 
-For animation, preserve the original pose, duplicate frames and edit independent body parts. Define actions with `tag_set`. Use `pixel_contact_sheet` to compare silhouette, ground contact and part consistency across frames; changing only a global offset will not produce articulated motion.
+For requested animation follow `pixel_help(topic="animation_workflow")`: retain the checked static identity baseline, inspect key poses before transitions, and choose sampling/timing for the action. Define actions with `tag_set`. Use `pixel_contact_sheet` to compare silhouette, ground contact and part consistency across frames; changing only a global offset will not produce articulated motion. Repeated defects use the existing inspection guide's diagnosis/repair loop, not repeated full regeneration.
 
 Save the editable `.pixloom` project. Export `sheet` for game-engine frames and JSON timing/tags. Supply `layers` to omit presentation backgrounds without changing the live project. GIF is a preview format with binary transparency and 10ms timing precision. Existing export files require explicit `overwrite=true`.
 

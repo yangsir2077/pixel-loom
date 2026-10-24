@@ -153,7 +153,7 @@ def validate_records(records):
 
 def content_digest(doc):
     data = doc.to_dict()
-    for key in ("revision", "active_layer", "active_frame", "selection", "quality_reviews", "feedback"):
+    for key in ("revision", "active_layer", "active_frame", "selection", "quality_reviews", "feedback", "material"):
         data.pop(key, None)
     return hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
 

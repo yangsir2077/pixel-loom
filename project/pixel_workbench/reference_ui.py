@@ -47,26 +47,17 @@ class ReferenceDialog:
         outer.pack(side="left", fill="y", padx=(0, 12))
         outer.pack_propagate(False)
         controls = editor._scroll_panel(outer)
-        editor._section(controls, "目标与风格")
+        editor._section(controls, "像素化设置")
         editor.button(controls, "使用工程内参考", lambda: self.send("/reference/setup", self.payload(action="use_project")), font=SMALL, pady=4).pack(fill="x", pady=3)
-        preset = tk.StringVar(value="选择尺寸模板")
-        presets = {"角色 32×48": (32, 48, "chibi"), "角色 48×64": (48, 64, "chibi"),
-                   "道具 32×32": (32, 32, "item"), "场景 320×180": (320, 180, "scene")}
-        def choose(value):
-            if value in presets:
-                w, h, style = presets[value]
-                self.quiet = True
-                for key, val in (("width", w), ("height", h), ("style", {"chibi": "小比例角色", "scene": "像素场景", "item": "图标与道具"}[style])):
-                    self.variables[key].set(val)
-                self.quiet = False
-                self.schedule()
-        editor._option(controls, preset, list(presets), choose).pack(fill="x", pady=4)
+        editor.label(controls, "按原图细节设置尺寸与色数，\n在右侧预览后再生成。", MUTED, SMALL,
+                     justify="left", wraplength=220).pack(anchor="w", pady=5)
         row = tk.Frame(controls, bg=PANEL)
         row.pack(fill="x", pady=8)
         for key, text in (("width", "宽"), ("height", "高"), ("colors", "色数")):
             editor.label(row, text, MUTED, SMALL).pack(side="left", padx=(0, 3))
             editor._entry(row, self.variables[key], 3).pack(side="left", padx=(0, 6), ipady=4)
-        editor._option(controls, self.variables["style"], ["小比例角色", "像素场景", "图标与道具"]).pack(fill="x", pady=4)
+        # Legacy style metadata remains loadable/savable for old projects. It
+        # never changes make_draft pixels, so it is not a conversion control.
         editor._option(controls, self.variables["fit"], ["完整放入 · 留透明边", "填满画布 · 居中裁切"]).pack(fill="x", pady=4)
         editor._section(controls, "裁切原图", "也可在原图上拖选")
         row = tk.Frame(controls, bg=PANEL)
@@ -129,10 +120,10 @@ class ReferenceDialog:
         self.style_clear_button.pack(side="left", padx=3)
         editor.label(self.right, "风格图由你自行提供，可不选。默认生成底稿时不套用画风；更换普通原图会清空上次风格。",
                      MUTED, SMALL, wraplength=520, justify="left").pack(anchor="w", pady=(0, 3))
-        editor.label(self.right, "补充要求（可选；艺术重绘需在 AI 对话中明确提出）", MUTED, SMALL).pack(anchor="w", pady=(3, 6))
+        editor.label(self.right, "后续修改要求（可选，发送给 AI 时说明）", MUTED, SMALL).pack(anchor="w", pady=(3, 6))
         entry = editor._entry(self.right, self.variables["brief"])
         entry.pack(fill="x", ipady=7)
-        editor.label(self.right, "生成后即可手动修改、保存和导出。AI 默认沿用底稿；只有你明确要求重绘时，才重新设计画面。",
+        editor.label(self.right, "先像素化保留原图，再按需要拆层、修改或制作动画；生成后也可手动编辑、保存和导出。",
                      MUTED, SMALL, wraplength=770, justify="left").pack(anchor="w", pady=10)
         for var in [*self.variables.values(), *self.crop_vars]:
             var.trace_add("write", self.schedule)
@@ -273,8 +264,8 @@ class ReferenceDialog:
         text = (f"请使用 Pixel Loom 的 MCP，将我导入的图片转换为自动像素底稿。先调用 pixel_onboard 和 pixel_reference 查看原图与参数。"
                 f"目标 {s['width']}×{s['height']} 像素，约 {s['colors']} 种颜色；要求：{s['brief']}。"
                 "已有对应底稿就保留；否则先保存当前作品，再用 pixel_redraw_begin(mode='draft') 生成可编辑底稿。"
-                "默认只采样和限色，不重新设计比例、轮廓、五官或服装。旧要求、风格参考和参数不代表我要求重绘。"
-                "只有我在对话中明确要求艺术重绘，才使用 mode='redraw' 或原生工具重新设计；局部修正只处理我指出的问题。"
+                "按 pixel_help(topic='image_workflow') 干净拆分可见物件，逐层和合成检查，保留底稿像素、色板与原造型。"
+                "后续修改和动画按我在对话中的要求进行，不默认重绘、补齐遮挡或新增动作。"
                 "每次使用实际读到的工程版本和参考版本；最后保存 .pixloom 和透明 PNG。")
         self.editor.root.clipboard_clear()
         self.editor.root.clipboard_append(text)

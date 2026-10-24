@@ -1,16 +1,18 @@
 # Pixel Loom · 像素织机
 
-**0.7.18 公开测试版**：新增项目标签关闭、批量收起和重新打开，关闭当前项目会先保存修改，保留工程文件与历史版本。MCP 同步支持，新增贡献者名单。源码采用 MIT 开源许可，历史版本可在发布页中分别下载。
+**0.7.19 公开测试版**：新增按需使用的法线与光照预览，支持方向笔刷、光源调整、发光层和贴图导出，界面与 MCP 共用同一流程。原像素、色板、绘画、动画、项目历史及原有导出方式保留。源码采用 MIT 开源许可，0.7.18 等历史版本可分别下载。
 
-## [⬇ 下载 Windows 便携版 · 0.7.18](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.18/pixel-loom-0.7.18-windows-x64.zip)
+## [⬇ 下载 Windows 便携版 · 0.7.19](https://github.com/yangsir2077/pixel-loom/releases/download/v0.7.19/pixel-loom-0.7.19-windows-x64.zip)
 
 下载后**完整解压**，双击 **打开像素织机.cmd** 即可使用，无需安装 Python。
 
-[查看发布页、版本说明与校验值](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.18) · [使用说明](#1-先打开应用) · [反馈问题](https://github.com/yangsir2077/pixel-loom/issues)
+[查看发布页、版本说明与校验值](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.19) · [使用说明](#1-先打开应用) · [反馈问题](https://github.com/yangsir2077/pixel-loom/issues)
 
 > **想直接使用，请点上面的 Windows 下载链接。** 本页的 `git clone`、**Code → Download ZIP**、`*-source.zip` 和 **Source code** 下载的是源码，不包含可直接运行的 `app` 文件夹或 exe。
 
 **Windows 便携版 · 使用者和 AI 的统一入口**
+
+“更多 → 法线与光照预览”提供法线 PNG／图集导入、轮廓／高度图估算、方向笔刷、移动光源对照、发光层和贴图导出。预览不改原画；应用后可撤销并随工程保存，MCP 使用 `pixel_material`。日常图转像素不自动生成材质。估算法线不是真实 3D 重建，原图已有反光仍会保留。
 
 新增按需去背景：**导入参考 → 去背景**。原图/效果预览、点背景、强度调整、保护区域、应用/撤销/重做及透明 PNG 导出；默认导入和转换不自动抠图。AI 可从 MCP 内置说明发现并使用。
 
@@ -24,7 +26,7 @@
 
 ## 1. 先打开应用
 
-1. 下载 **pixel-loom-0.7.18-windows-x64.zip**，或在[发布页](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.18)的 **Assets（资源）** 中选择这个文件。
+1. 下载 **pixel-loom-0.7.19-windows-x64.zip**，或在[发布页](https://github.com/yangsir2077/pixel-loom/releases/tag/v0.7.19)的 **Assets（资源）** 中选择这个文件。
 2. 完整解压，打开解压得到的 **PixelLoom** 文件夹；不要直接在压缩包里运行。
 3. 双击根目录的 **打开像素织机.cmd**，或进入 **app** 文件夹双击 **PixelLoom.exe**。Windows 便携版不需要另装 Python。
 
@@ -80,7 +82,7 @@ LICENSE               开源许可证
 
 ## 3. 给 AI：接手后按这个顺序
 
-接入后不需要使用者额外提供制作文档：读取 `pixel_onboard.creation_workflow.read_next`，调用 `pixel_help(topic="workflow")`；动画任务再读 `animation_workflow`，交付前读 `inspection_workflow`。指南随 MCP 返回，包含造型/分层、可选客户端坐标计算、清理旧运动像素、看图修正和完整自检；不包含成品生成器。资源客户端也可读取 `pixel-loom://workflow`。AI 仍需具备看图和设计能力，流程不能保证所有模型达到相同水平。
+接入后不需要使用者额外提供制作文档：读取 `pixel_onboard.creation_workflow.read_next`，调用 `pixel_help(topic="workflow")`；动画任务再读 `animation_workflow`，交付前读 `inspection_workflow`。指南随 MCP 返回：先检查静态身份基准并拆层，按需验证关键姿势、制作过渡和节奏，逐层逐帧检查；重复缺陷先查结构原因。尺寸、色数和帧数按任务与原图决定，不提供成品生成器。资源客户端也可读取 `pixel-loom://workflow`。AI 仍需具备看图和设计能力，流程不能保证所有模型达到相同水平。
 
 1. 找到名称以 `pixel_onboard` 结尾的 MCP 工具并调用 `{}`。客户端可能添加前缀，不要写死完整工具名。**读取本说明不会自动建立 MCP 连接。**
 2. 读取返回的 `current_document`、`document_id`、`revision`、实际保存路径、图层、帧、参考、反馈和自检状态，再查看实际图像。不要假定是空白工程。
